@@ -20,6 +20,100 @@
   --radius: 12px;
 }
 
+/* LOGIN OVERLAY */
+#loginOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--navy);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#loginOverlay .login-box {
+  background: white;
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+#loginOverlay .login-logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+#loginOverlay .login-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+#loginOverlay .login-hex {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+#loginOverlay input[type="password"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--gray);
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#loginOverlay input[type="password"]:focus {
+  border-color: var(--blue);
+}
+
+#loginOverlay .login-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+#loginOverlay .login-btn:hover {
+  opacity: 0.9;
+}
+
+#loginOverlay .login-error {
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 12px;
+  min-height: 20px;
+}
+
+#loginOverlay .login-remember {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#loginOverlay .login-remember input {
+  accent-color: var(--gold);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -519,6 +613,23 @@ header .project-badge {
 </head>
 <body>
 
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-hex">&#x2B22;</div>
+    <div class="login-logo">HONEYCOMB</div>
+    <div class="login-sub">Scope of Work Builder</div>
+    <form onsubmit="return handleLogin(event)">
+      <input type="password" id="loginPassword" placeholder="Enter team password" autocomplete="current-password" autofocus>
+      <button type="submit" class="login-btn">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+      <label class="login-remember">
+        <input type="checkbox" id="loginRemember" checked> Remember me for 30 days
+      </label>
+    </form>
+  </div>
+</div>
+
 <header>
   <h1>HONEYCOMB SOW Builder</h1>
   <span class="project-badge" id="projectBadge">New Project</span>
@@ -706,6 +817,61 @@ header .project-badge {
 </div>
 
 <script>
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+// SHA-256 hash of the team password "honeycomb2026"
+// To change: update this hash with the SHA-256 of your new password
+const PASSWORD_HASH = 'd04598f3f776b86fd4b2c6edb89d1ecfb12cdf345633e536f46c7125e2513b19';
+
+async function sha256(message) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Check if already authenticated
+(function checkAuth() {
+  const stored = localStorage.getItem('hc_sow_auth');
+  if (stored) {
+    try {
+      const { hash, expires } = JSON.parse(stored);
+      if (hash === PASSWORD_HASH && Date.now() < expires) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        return;
+      }
+    } catch(e) {}
+    localStorage.removeItem('hc_sow_auth');
+  }
+})();
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const pw = document.getElementById('loginPassword').value;
+  const hash = await sha256(pw);
+
+  if (hash === PASSWORD_HASH) {
+    // Store auth
+    const remember = document.getElementById('loginRemember').checked;
+    const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000); // 30 days or 8 hours
+    localStorage.setItem('hc_sow_auth', JSON.stringify({ hash: PASSWORD_HASH, expires }));
+
+    // Fade out overlay
+    const overlay = document.getElementById('loginOverlay');
+    overlay.style.transition = 'opacity 0.3s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+  } else {
+    document.getElementById('loginError').textContent = 'Incorrect password. Please try again.';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+  return false;
+}
+
 // ============================================================
 // DATA: All modules and their scope items
 // ============================================================
