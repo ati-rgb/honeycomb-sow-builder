@@ -127,7 +127,7 @@ const KITCHEN_TRADES = [
   { name: 'Drywall', sub: 'Drywall', items: [
     { name: 'New drywall installation', hasQty: true, unit: 'SF' },
     { name: 'Drywall patch and repair', hasQty: true, unit: 'SF' },
-    { name: 'Texture finish', options: ['Smooth','Orange peel','Knockdown','Match existing'] },
+    { name: 'Texture finish', options: ['Smooth (Level 5)','Smooth (Level 4)','Orange peel','Knockdown','Skip trowel','Match existing'] },
     { name: 'Prime all new/repaired drywall' },
   ]},
   { name: 'Cabinetry & Millwork', sub: 'Cabinets', items: [
@@ -916,7 +916,17 @@ const narrativeMap = {
   // Kitchen Drywall
   'New drywall installation': (detail, notes, qty) => `Install ${qty ? qty + ' SF of ' : ''}new drywall`,
   'Drywall patch and repair': (detail, notes, qty) => `Patch and repair ${qty ? qty + ' SF of ' : ''}existing drywall`,
-  'Texture finish': (detail) => `Apply ${detail ? detail.toLowerCase() : 'smooth'} texture finish to all new and repaired drywall`,
+  'Texture finish': (detail) => {
+    const finishMap = {
+      'Smooth (Level 5)': 'Apply Level 5 smooth finish to all new and repaired drywall. Level 5 includes skim coat over entire surface for uniform appearance under critical lighting conditions',
+      'Smooth (Level 4)': 'Apply Level 4 smooth finish to all new and repaired drywall surfaces',
+      'Orange peel': 'Apply orange peel texture to match existing wall finish',
+      'Knockdown': 'Apply knockdown texture to match existing wall finish',
+      'Skip trowel': 'Apply skip trowel texture finish per design specifications',
+      'Match existing': 'Match existing wall texture throughout (exact texture match not guaranteed due to age and application variables)'
+    };
+    return finishMap[detail] || `Apply ${detail ? detail.toLowerCase() : 'smooth'} texture finish to all new and repaired drywall`;
+  },
   'Prime all new/repaired drywall': () => 'Prime all new and repaired drywall surfaces',
 
   // Kitchen Cabinets
@@ -1049,13 +1059,16 @@ const narrativeMap = {
 
   // Bathroom Tile
   'Floor tile': (detail, notes, qty) => `Install ${notes ? notes + ' ' : ''}floor tile${qty ? ' (' + qty + ' SF)' : ''}`,
-  'Shower floor tile': (detail) => `Install ${detail ? detail.toLowerCase() : ''} shower floor tile`,
-  'Shower wall tile height': (detail) => `Install shower wall tile ${detail ? detail.toLowerCase() : 'to ceiling'}`,
-  'Shower niche(s)': (detail, notes, qty) => `Tile ${qty ? qty + ' ' : ''}shower niche${qty > 1 ? 's' : ''} with coordinating tile`,
-  'Accent tile / feature wall': (detail, notes) => notes ? `Install accent tile/feature wall: ${notes}` : 'Install accent tile per design plans',
+  'Shower floor tile': (detail) => `Install ${detail ? detail.toLowerCase() : ''} shower floor tile. Note: shower floor tile is installed with slope to drain per waterproofing specifications`,
+  'Shower wall tile height': (detail) => `Install shower wall tile ${detail ? detail.toLowerCase() : 'to ceiling'}. Tile size and layout per design plans; grout color per owner selection`,
+  'Shower niche(s)': (detail, notes, qty) => `Tile ${qty ? qty + ' ' : ''}shower niche${qty > 1 ? 's' : ''} with coordinating tile. Niche dimensions per design; shelf trim per tile selection`,
+  'Accent tile / feature wall': (detail, notes) => notes ? `Install accent tile/feature wall: ${notes}. Note: accent tile may require additional layout time depending on pattern complexity` : 'Install accent tile per design plans',
   'Tub surround tile': (detail) => detail === 'N/A' ? null : `Install tub surround tile ${detail ? detail.toLowerCase() : ''}`,
   'Wainscoting': (detail, notes, qty) => `Install ${detail ? detail.toLowerCase() : ''} wainscoting${qty ? ' (' + qty + ' LF)' : ''} per design plans`,
-  'Tile layout/pattern': (detail) => detail ? `Tile layout: ${detail.toLowerCase()} pattern` : null,
+  'Tile layout/pattern': (detail) => detail ? `Layout: ${detail.toLowerCase()} pattern per design plans. Note: complex patterns (herringbone, chevron) require additional labor` : null,
+  'Tile size': (detail) => detail ? `Tile size: ${detail}. Note: tile size affects layout complexity and labor` : null,
+  'Grout color': (detail) => detail ? `Grout color: ${detail}` : null,
+  'Tile layout pattern': (detail) => detail ? `Layout: ${detail} pattern per design plans` : null,
   'Schluter/edge trim profiles': () => 'Install Schluter and/or edge trim profiles at all exposed tile edges',
   'Grouting and sealing': () => 'Grout and seal all tile installations',
 
@@ -1319,6 +1332,57 @@ function generateSOW() {
       ownerItems.forEach(item => { sow += `<li>${item}</li>`; });
       sow += `</ul></div>`;
     }
+
+    // Owner-Provided Materials list
+    const ownerMaterialsByModule = {
+      'kitchen': [
+        'Kitchen cabinets and cabinet hardware',
+        'Countertops (granite, quartz, marble, etc.)',
+        'Kitchen appliances (refrigerator, range, dishwasher, microwave, garbage disposal)',
+        'Flooring materials (tile, hardwood, luxury vinyl, etc.)',
+        'Backsplash tile and materials',
+        'Paint colors and finishes',
+        'Plumbing fixtures (sink, faucet)',
+        'Light fixtures and electrical devices',
+        'Window treatments'
+      ],
+      'bathroom': [
+        'Bathroom vanity and vanity top',
+        'Plumbing fixtures (toilet, sink, faucet, shower fixtures)',
+        'Flooring materials (tile, luxury vinyl, etc.)',
+        'Wall tile for shower and backsplash areas',
+        'Paint colors and finishes',
+        'Light fixtures and electrical devices',
+        'Bathroom accessories and hardware',
+        'Mirror and medicine cabinet',
+        'Glass shower enclosure (if applicable)',
+        'Window treatments'
+      ],
+      'laundry': [
+        'Laundry appliances (washer, dryer)',
+        'Cabinets and countertops',
+        'Flooring materials',
+        'Paint colors and finishes',
+        'Light fixtures and electrical devices',
+        'Hardware and accessories'
+      ],
+      'paint': [
+        'Paint colors for walls, ceiling, and trim',
+        'Accent or specialty finishes'
+      ],
+      'extpaint': [
+        'Exterior paint colors',
+        'Specialty coatings or stains'
+      ]
+    };
+
+    const ownerMats = ownerMaterialsByModule[inst.id] || [];
+    if (ownerMats.length > 0) {
+      sow += `<div class="sow-owner-materials"><strong>Finishing Materials (Owner Provided):</strong><ul>`;
+      ownerMats.forEach(m => { sow += `<li>${m}</li>`; });
+      sow += `</ul></div>`;
+      sow += `<p class="sow-pricing-note"><em>The quoted price will include all labor, equipment, and substrate material costs for ${moduleTitle.toLowerCase()}. All finish materials to be selected and provided by owner unless otherwise specified.</em></p>`;
+    }
   });
 
   // General Conditions and Notes
@@ -1351,6 +1415,18 @@ function generateSOW() {
     sow += `Owner is responsible for all finish material selections and timely delivery to job site. `;
     sow += `Schedule is contingent upon timely material deliveries and owner decision-making.`;
     sow += `</div>`;
+
+    sow += `<div class="sow-notes">`;
+    sow += `<strong>Important Notes:</strong><ul>`;
+    sow += `<li>All finish materials (cabinets, countertops, appliances, flooring, paint, fixtures, hardware) to be selected and provided by owner unless otherwise specified in this scope</li>`;
+    sow += `<li>Contractor provides labor and substrate materials only unless explicitly noted</li>`;
+    sow += `<li>Drywall texture will match existing unless otherwise specified in room scope above</li>`;
+    sow += `<li>Trim where replaced will match existing profile and dimensions unless otherwise specified</li>`;
+    sow += `<li>Finish match for existing wood flooring, stain, or paint is not guaranteed due to age, sun exposure, and application variables</li>`;
+    sow += `<li>Any unforeseen conditions discovered during construction that require additional work will be addressed via change order process</li>`;
+    sow += `<li>Project timeline is dependent on material selections, timely delivery, and permit approval process</li>`;
+    sow += `<li>Owner is responsible for timely finish material selections to avoid project delays</li>`;
+    sow += `</ul></div>`;
   }
 
   // Exclusions
