@@ -1141,6 +1141,182 @@ function toNarrative(itemName, detail, notes, qty, unit) {
   return text;
 }
 
+// ============================================================
+// TRADE EXCLUSIONS — what is NOT included per trade
+// ============================================================
+const TRADE_EXCLUSIONS = {
+  'Demolition': [
+    'Structural modifications unless explicitly listed above',
+    'Hazardous material removal unless tested and confirmed absent',
+    'Disposal of owner-retained items',
+    'Repair of unforeseen conditions exposed during demolition'
+  ],
+  'Framing': [
+    'Structural engineering calculations unless Gustavo is providing them as part of this project',
+    'Shear wall installation unless shown on plans',
+    'Any framing not explicitly listed above'
+  ],
+  'Plumbing': [
+    'Main line repair or replacement',
+    'Water heater replacement unless listed',
+    'Gas line work unless listed',
+    'Any fixture not listed in the rough-in schedule'
+  ],
+  'Electrical': [
+    'Panel upgrade unless explicitly listed',
+    'Low voltage wiring unless listed',
+    'Any circuit or outlet not listed above'
+  ],
+  'HVAC': [
+    'Equipment replacement unless listed',
+    'Ductwork beyond the scope area',
+    'Any work requiring structural penetration not shown on plans'
+  ],
+  'Insulation': [
+    'Title 24 compliance documentation unless Honeycomb has confirmed it is included',
+    'Spray foam unless explicitly listed'
+  ],
+  'Drywall': [
+    'Skim coat or Level 5 finish unless explicitly listed',
+    'Plaster repair in areas outside the scope',
+    'Painting'
+  ],
+  'Waterproofing': [
+    'Surface waterproofing outside the shower area',
+    'Remediation of existing water damage unless listed'
+  ],
+  'Tile': [
+    'Substrate preparation and waterproofing unless listed as part of this scope',
+    'Tile supplied by trade unless explicitly stated',
+    'Grout sealer unless listed',
+    'Removal and replacement of tile outside the scope area'
+  ],
+  'Cabinetry': [
+    'Cabinet procurement',
+    'Countertop installation',
+    'Appliance installation',
+    'Touch-up painting of adjacent walls'
+  ],
+  'Countertops': [
+    'Sink procurement unless listed',
+    'Faucet installation',
+    'Undermount sink installation unless listed'
+  ],
+  'Finish Plumbing': [
+    'Fixture procurement',
+    'Any rough plumbing modifications',
+    'Gas appliance connections unless listed'
+  ],
+  'Finish Electrical': [
+    'Fixture procurement',
+    'Any panel work',
+    'Low voltage or smart home wiring unless listed'
+  ],
+  'Painting': [
+    'Drywall repair and patching unless explicitly listed',
+    'Exterior painting unless listed',
+    'Cabinet painting unless listed',
+    'Protection and removal of furniture or owner belongings'
+  ],
+  'Finish Carpentry': [
+    'Furniture installation',
+    'Built-ins not explicitly listed',
+    'Stair work unless listed'
+  ],
+  'Flooring': [
+    'Subfloor replacement unless listed',
+    'Floor leveling beyond 3/16 inch in 10 feet unless listed',
+    'Transitions to areas outside the scope'
+  ],
+  'Final': [
+    'Exterior cleaning unless listed',
+    'Window cleaning exterior',
+    'Appliance deep cleaning unless listed'
+  ],
+  'Glass': [
+    'Custom glass fabrication beyond standard sizing',
+    'Replacement of glass damaged after installation',
+    'Hardware upgrades beyond specified finish'
+  ],
+  'Appliances': [
+    'Appliance procurement unless explicitly stated',
+    'Extended warranties',
+    'Modifications to cabinetry or countertops for appliance fitment'
+  ]
+};
+
+// ============================================================
+// TRADE COMPLETION CRITERIA — what "done" means per trade
+// ============================================================
+const TRADE_COMPLETION = {
+  'Demolition': 'All items listed for removal have been removed. All debris has been hauled from the property. Subfloor and structural elements are exposed and accessible for inspection. Adjacent surfaces and structures to remain are undamaged. Area is broom clean and ready for rough trades.',
+  'Framing': 'All framing shown on plans is complete. All blocking and backing is installed per blocking schedule. Framing dimensions have been verified against cabinet and fixture specifications. Framing inspection has been scheduled and passed. Written confirmation from trade that dimensions are correct before walls are closed.',
+  'Plumbing': 'All rough-in locations match fixture specifications provided by Honeycomb. Rough plumbing inspection has been passed. Written confirmation from trade that all dimensions are correct. Stubs are capped and labeled.',
+  'Electrical': 'All circuits are roughed in per plan. All rough-in locations match fixture and appliance specifications. Rough electrical inspection has been passed. All circuits are labeled at the panel.',
+  'HVAC': 'All ductwork and equipment is installed per plan. HVAC inspection has been passed. All exhaust fans are ducted to exterior and tested at required CFM.',
+  'Insulation': 'All insulation is installed per plan and Title 24 requirements where applicable. Insulation inspection has been passed. No walls have been closed before inspection.',
+  'Drywall': 'All surfaces are finished to the specified level. No visible seams, fastener heads, or tool marks. Corners are straight. All surfaces are ready for paint without additional preparation by the painter.',
+  'Waterproofing': 'Flood test has been completed and passed. Flood test result is documented with a photograph showing standing water and timestamp. Honeycomb has provided written sign-off before tile installation begins.',
+  'Tile': 'All tile is installed, grouted, and sealed. Grout joints are consistent and fully filled. No lippage exceeding 1/16 inch on floor tile or 1/32 inch on wall tile. All tile cuts are clean. All installation debris and packaging have been removed from the site.',
+  'Cabinetry': 'All cabinets are plumb and level within 1/8 inch. All doors and drawers open and close correctly. All hardware is installed and functioning. Gaps at walls are filled or scribed. No visible damage to any cabinet finish.',
+  'Countertops': 'Countertop is installed with no chips or cracks. All seams are tight and polished. Sink cutout is correct. Caulk joint at wall is complete and consistent. Undermount sink clips are installed and holding.',
+  'Finish Plumbing': 'All fixtures are installed and operational. No leaks at any connection after 24 hours. Water pressure and flow are tested and normal. Disposal and dishwasher are operational if in scope.',
+  'Finish Electrical': 'All devices and fixtures are installed and operational. All circuits have been tested. No tripped breakers. Final electrical inspection has been passed.',
+  'Painting': 'All surfaces are painted to specified coats and sheen. No visible brush marks, roller marks, or missed areas on finish coat. Lines at all transitions are clean. All masking and protection have been removed. No paint on tile, hardware, fixtures, or floors.',
+  'Finish Carpentry': 'All trim is installed, nailed, filled, and sanded. Joints are tight. Corner miters are correct. All nail holes are filled and sanded smooth. Ready for paint without additional preparation.',
+  'Flooring': 'Flooring is installed per manufacturer requirements. Transitions are installed at all doorways. All flooring debris has been removed. Subfloor preparation is documented if required.',
+  'Final': 'Property is in move-in ready condition. All surfaces are clean. No construction debris remains on the property including garage and exterior areas used during construction.',
+  'Glass': 'Glass enclosure is installed plumb and level. All hardware is functioning. Door swings freely. No chips or scratches. Silicone joints are complete and consistent.',
+  'Appliances': 'All appliances are installed per manufacturer specifications. All connections are tested and operational. All appliances are clean and free of protective film. Manufacturer warranties and operating instructions have been provided.'
+};
+
+// Helper: find exclusions/completion for a trade by matching keys
+function getTradeExclusions(tradeName) {
+  const name = tradeName.toLowerCase();
+  for (const [key, val] of Object.entries(TRADE_EXCLUSIONS)) {
+    if (name.includes(key.toLowerCase())) return val;
+  }
+  return null;
+}
+
+function getTradeCompletion(tradeName) {
+  const name = tradeName.toLowerCase();
+  for (const [key, val] of Object.entries(TRADE_COMPLETION)) {
+    if (name.includes(key.toLowerCase())) return val;
+  }
+  return null;
+}
+
+// Generate exclusions + completion HTML for a set of trade indices
+function renderTradeExclusionsAndCompletion(inst, tradeIndices) {
+  let html = '';
+  const allExclusions = [];
+  const allCompletions = [];
+
+  tradeIndices.forEach(tIdx => {
+    const trade = inst.trades[tIdx];
+    if (!trade) return;
+    const excl = getTradeExclusions(trade.name) || getTradeExclusions(trade.sub || '');
+    if (excl) excl.forEach(e => { if (!allExclusions.includes(e)) allExclusions.push(e); });
+    const comp = getTradeCompletion(trade.name) || getTradeCompletion(trade.sub || '');
+    if (comp && !allCompletions.includes(comp)) allCompletions.push(comp);
+  });
+
+  if (allExclusions.length > 0) {
+    html += `<div class="sow-exclusions-block"><strong>NOT INCLUDED IN THIS SCOPE:</strong><ul>`;
+    allExclusions.forEach(e => { html += `<li>${e}</li>`; });
+    html += `</ul></div>`;
+  }
+
+  if (allCompletions.length > 0) {
+    html += `<div class="sow-completion-block"><strong>WORK IS COMPLETE WHEN:</strong>`;
+    allCompletions.forEach(c => { html += `<p>${c}</p>`; });
+    html += `</div>`;
+  }
+
+  return html;
+}
+
 // Phase grouping definitions for kitchen
 const KITCHEN_PHASE_MAP = [
   { heading: 'General Scope', trades: [], isGeneral: true },
@@ -1242,7 +1418,9 @@ function generateSOW() {
         sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">${secNum}. ${trade.name}:</span></div>`;
         sow += `<ol class="narrative-items">`;
         items.forEach(text => { sow += `<li>${text}</li>`; });
-        sow += `</ol></div>`;
+        sow += `</ol>`;
+        sow += renderTradeExclusionsAndCompletion(inst, [tIdx]);
+        sow += `</div>`;
         secNum++;
       });
       return;
@@ -1305,6 +1483,9 @@ function generateSOW() {
         });
         sow += `</ol>`;
       }
+
+      // Add exclusions and completion criteria for this phase's trades
+      sow += renderTradeExclusionsAndCompletion(inst, phase.trades);
 
       sow += `</div>`;
       secNum++;
