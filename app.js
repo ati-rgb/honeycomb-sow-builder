@@ -55,6 +55,53 @@ async function handleLogin(e) {
 }
 
 // ============================================================
+// INPUT SOURCE TRACKING
+// ============================================================
+function handleInputSourceChange() {
+  const type = document.getElementById('inputSourceType').value;
+  document.getElementById('sourceDetailSiteWalk').style.display = type === 'site_walk' ? 'block' : 'none';
+  document.getElementById('sourceDetailPlans').style.display = type === 'plans' ? 'block' : 'none';
+  document.getElementById('sourceDetailDesign').style.display = type === 'design' ? 'block' : 'none';
+  document.getElementById('sourceDetailCombined').style.display = type === 'combined' ? 'block' : 'none';
+
+  // Auto-set status to PRELIMINARY for site walk only
+  if (type === 'site_walk') {
+    document.getElementById('sowStatus').value = 'PRELIMINARY';
+  }
+}
+
+function getInputSourceText() {
+  const type = document.getElementById('inputSourceType').value;
+  if (type === 'site_walk') {
+    const date = document.getElementById('siteWalkDate').value;
+    const by = document.getElementById('siteWalkBy').value;
+    const dateStr = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not specified';
+    return `Site walk observations only. Walk conducted ${dateStr}${by ? ' by ' + by : ''}.`;
+  } else if (type === 'plans') {
+    const sheets = document.getElementById('planSheets').value;
+    return `Architectural plans provided by Gustavo. Plan sheets referenced: ${sheets || 'See plan set'}.`;
+  } else if (type === 'design') {
+    const docs = document.getElementById('designDocs').value;
+    return `Design documents provided by Carolina. Documents referenced: ${docs || 'See design package'}.`;
+  } else {
+    const date = document.getElementById('combSiteWalkDate').value;
+    const by = document.getElementById('combSiteWalkBy').value;
+    const sheets = document.getElementById('combPlanSheets').value;
+    const docs = document.getElementById('combDesignDocs').value;
+    const dateStr = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not specified';
+    let text = 'Combined sources:';
+    text += ` Site walk ${dateStr}${by ? ' by ' + by : ''}.`;
+    if (sheets) text += ` Plan sheets: ${sheets}.`;
+    if (docs) text += ` Design documents: ${docs}.`;
+    return text;
+  }
+}
+
+function isSiteWalkOnly() {
+  return document.getElementById('inputSourceType').value === 'site_walk';
+}
+
+// ============================================================
 // VERSION CONTROL
 // ============================================================
 let versionHistory = [];
@@ -1171,17 +1218,28 @@ const narrativeMap = {
 };
 
 function toNarrative(itemName, detail, notes, qty, unit) {
+  let text;
   if (narrativeMap[itemName]) {
     const result = narrativeMap[itemName](detail, notes, qty);
     if (result === null) return null;
-    let text = result;
+    text = result;
     if (notes && !text.includes(notes)) text += `. ${notes}`;
-    return text;
+  } else {
+    text = itemName;
+    if (detail && detail !== 'Yes') text += ` - ${detail}`;
+    if (qty) text += ` (${qty}${unit ? ' ' + unit : ''})`;
+    if (notes) text += `. ${notes}`;
   }
-  let text = itemName;
-  if (detail && detail !== 'Yes') text += ` - ${detail}`;
-  if (qty) text += ` (${qty}${unit ? ' ' + unit : ''})`;
-  if (notes) text += `. ${notes}`;
+
+  // Plan reference tagging: if plans or combined source, check for sheet references
+  const sourceType = document.getElementById('inputSourceType')?.value;
+  if (sourceType === 'plans' || sourceType === 'combined') {
+    const hasRef = /\[.*(?:Sheet|sheet|A\d|S\d|E\d|M\d|Schedule|Detail|Plan)/i.test(notes || '');
+    if (!hasRef) {
+      text += ` <span class="no-plan-ref">[NO PLAN REFERENCE \u2014 VERIFY BEFORE BIDDING]</span>`;
+    }
+  }
+
   return text;
 }
 
@@ -1607,8 +1665,20 @@ function generateSOW() {
   const status = document.getElementById('sowStatus').value || 'PRELIMINARY';
   const revisionNotes = document.getElementById('sowRevisionNotes').value || 'Initial issue.';
 
+  // Input source
+  const inputSource = getInputSourceText();
+  const siteWalkOnly = isSiteWalkOnly();
+
+  // Force PRELIMINARY if site walk only
+  const effectiveStatus = siteWalkOnly ? 'PRELIMINARY' : status;
+
   // Supersedes notice
   let sow = `<div class="sow-supersedes">THIS IS VERSION ${version} DATED ${today}. THIS DOCUMENT SUPERSEDES ALL PREVIOUS VERSIONS. DO NOT WORK FROM A PREVIOUS VERSION.</div>`;
+
+  // Preliminary scope warning (site walk only)
+  if (siteWalkOnly) {
+    sow += `<div class="sow-preliminary-warning"><strong>PRELIMINARY SCOPE \u2014 SITE WALK ONLY</strong><br>This scope was generated from site walk observations without plans or design documents. It is subject to revision once architectural plans and design documents are available. Do not use this document for bidding without Honeycomb review and written approval. STATUS WILL CHANGE TO APPROVED ONLY AFTER PLAN AND DOCUMENT REVIEW IS COMPLETE.</div>`;
+  }
 
   sow += `<h1>HONEYCOMB DESIGN AND REMODELING<br>SCOPE OF WORK</h1>`;
   sow += `<div class="sow-meta">
@@ -1618,9 +1688,10 @@ function generateSOW() {
     ${projType ? `<strong>Scope:</strong> ${projType}<br>` : ''}
     <strong>Date:</strong> ${today}<br>
     ${designFirm ? `<strong>Design:</strong> ${designFirm}<br>` : ''}
-    <strong>Version:</strong> ${version} | <strong>Status:</strong> ${status}<br>
+    <strong>Version:</strong> ${version} | <strong>Status:</strong> ${effectiveStatus}<br>
     <strong>Revision Date:</strong> ${today}<br>
-    <strong>Revision Notes:</strong> ${revisionNotes}
+    <strong>Revision Notes:</strong> ${revisionNotes}<br>
+    <strong>Input Source:</strong> ${inputSource}
   </div>`;
 
   // After first generation, show the Revision button

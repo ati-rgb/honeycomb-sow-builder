@@ -596,6 +596,23 @@ header .project-badge {
   color: #E53E3E;
 }
 
+.sow-output .sow-preliminary-warning {
+  background: #FED7D7;
+  border: 2px solid #E53E3E;
+  color: #742A2A;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  line-height: 1.6;
+}
+.sow-output .no-plan-ref {
+  color: #E53E3E;
+  font-weight: 700;
+  font-size: 11px;
+}
+
 .sow-output .sow-supersedes {
   background: #1A202C;
   color: #FFFFFF;
@@ -1043,6 +1060,60 @@ header .project-badge {
         <div id="revisionHistory" style="margin-top: 12px; display: none;">
           <label class="detail-label">REVISION HISTORY</label>
           <div id="revisionHistoryList" style="font-size: 12px; color: var(--muted); padding: 8px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; max-height: 120px; overflow-y: auto;"></div>
+        </div>
+      </div>
+
+      <!-- Input Source Tracking -->
+      <div class="card" style="background: #F7FAFC; border: 1px solid #E2E8F0; margin-top: 16px;">
+        <h3 style="margin: 0 0 12px 0; font-size: 15px; color: var(--navy);">Input Source</h3>
+        <div>
+          <label class="detail-label">SOURCE TYPE</label>
+          <select id="inputSourceType" onchange="handleInputSourceChange()" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px;">
+            <option value="site_walk">Site walk observations only</option>
+            <option value="plans">Architectural plans (Gustavo)</option>
+            <option value="design">Design documents (Carolina)</option>
+            <option value="combined">Combined — plans + design + site walk</option>
+          </select>
+        </div>
+        <div id="sourceDetailSiteWalk" style="margin-top: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label class="detail-label">SITE WALK DATE</label>
+              <input type="date" id="siteWalkDate" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px;">
+            </div>
+            <div>
+              <label class="detail-label">CONDUCTED BY</label>
+              <input type="text" id="siteWalkBy" placeholder="e.g., Rick, Ati" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px;">
+            </div>
+          </div>
+        </div>
+        <div id="sourceDetailPlans" style="margin-top: 12px; display: none;">
+          <label class="detail-label">PLAN SHEETS REFERENCED</label>
+          <textarea id="planSheets" rows="2" placeholder="e.g., A1.0, A2.1, A3.1, S1.0" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit;"></textarea>
+        </div>
+        <div id="sourceDetailDesign" style="margin-top: 12px; display: none;">
+          <label class="detail-label">DESIGN DOCUMENTS REFERENCED</label>
+          <textarea id="designDocs" rows="2" placeholder="e.g., Kitchen Design Package, Material Selections Board" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit;"></textarea>
+        </div>
+        <div id="sourceDetailCombined" style="margin-top: 12px; display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label class="detail-label">SITE WALK DATE</label>
+              <input type="date" id="combSiteWalkDate" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px;">
+            </div>
+            <div>
+              <label class="detail-label">CONDUCTED BY</label>
+              <input type="text" id="combSiteWalkBy" placeholder="e.g., Rick, Ati" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px;">
+            </div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label class="detail-label">PLAN SHEETS REFERENCED</label>
+            <textarea id="combPlanSheets" rows="2" placeholder="e.g., A1.0, A2.1, A3.1, S1.0" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit;"></textarea>
+          </div>
+          <div>
+            <label class="detail-label">DESIGN DOCUMENTS REFERENCED</label>
+            <textarea id="combDesignDocs" rows="2" placeholder="e.g., Kitchen Design Package, Material Selections Board" style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit;"></textarea>
+          </div>
         </div>
       </div>
 
