@@ -55,6 +55,50 @@ async function handleLogin(e) {
 }
 
 // ============================================================
+// VERSION CONTROL
+// ============================================================
+let versionHistory = [];
+let currentVersion = 1.0;
+let sowGenerated = false;
+
+function promptRevision() {
+  const changeNotes = prompt('What changed from the previous version?\n\nDescribe the revision before generating.');
+  if (!changeNotes || !changeNotes.trim()) {
+    alert('Revision notes are required. Please describe what changed.');
+    return;
+  }
+  // Save current version to history
+  const prevVersion = document.getElementById('sowVersion').value;
+  const prevDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const prevNotes = document.getElementById('sowRevisionNotes').value;
+  versionHistory.push({ version: prevVersion, date: prevDate, notes: prevNotes });
+
+  // Increment version
+  currentVersion = parseFloat(prevVersion) + 0.1;
+  currentVersion = Math.round(currentVersion * 10) / 10;
+  document.getElementById('sowVersion').value = currentVersion.toFixed(1);
+  document.getElementById('sowRevisionNotes').value = changeNotes.trim();
+
+  // Show revision history
+  updateRevisionHistoryDisplay();
+
+  // Generate new version
+  generateSOW();
+}
+
+function updateRevisionHistoryDisplay() {
+  if (versionHistory.length === 0) return;
+  const histEl = document.getElementById('revisionHistory');
+  const listEl = document.getElementById('revisionHistoryList');
+  histEl.style.display = 'block';
+  let html = '';
+  versionHistory.forEach(v => {
+    html += `<div style="margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #EDF2F7;"><strong>v${v.version}</strong> (${v.date}): ${v.notes}</div>`;
+  });
+  listEl.innerHTML = html;
+}
+
+// ============================================================
 // DATA: All modules and their scope items
 // ============================================================
 
@@ -1559,16 +1603,29 @@ function generateSOW() {
   const bedsBaths = document.getElementById('bedsBaths').value || '';
   const designFirm = document.getElementById('designFirm').value || '';
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const version = document.getElementById('sowVersion').value || '1.0';
+  const status = document.getElementById('sowStatus').value || 'PRELIMINARY';
+  const revisionNotes = document.getElementById('sowRevisionNotes').value || 'Initial issue.';
 
-  let sow = `<h1>HONEYCOMB DESIGN AND REMODELING<br>SCOPE OF WORK</h1>`;
+  // Supersedes notice
+  let sow = `<div class="sow-supersedes">THIS IS VERSION ${version} DATED ${today}. THIS DOCUMENT SUPERSEDES ALL PREVIOUS VERSIONS. DO NOT WORK FROM A PREVIOUS VERSION.</div>`;
+
+  sow += `<h1>HONEYCOMB DESIGN AND REMODELING<br>SCOPE OF WORK</h1>`;
   sow += `<div class="sow-meta">
     <strong>PROJECT:</strong> ${address}<br>
     <strong>CLIENT:</strong> ${client}<br>
     ${propType ? `${propType} | ` : ''}${sf ? `${sf} SF | ` : ''}${bedsBaths ? `${bedsBaths} | ` : ''}${yearBuilt ? `Year Built: ${yearBuilt}` : ''}<br>
     ${projType ? `<strong>Scope:</strong> ${projType}<br>` : ''}
     <strong>Date:</strong> ${today}<br>
-    ${designFirm ? `<strong>Design:</strong> ${designFirm}` : ''}
+    ${designFirm ? `<strong>Design:</strong> ${designFirm}<br>` : ''}
+    <strong>Version:</strong> ${version} | <strong>Status:</strong> ${status}<br>
+    <strong>Revision Date:</strong> ${today}<br>
+    <strong>Revision Notes:</strong> ${revisionNotes}
   </div>`;
+
+  // After first generation, show the Revision button
+  sowGenerated = true;
+  document.getElementById('btnRevision').style.display = 'inline-block';
 
   // ── CALIFORNIA COMPLIANCE (mandatory, every document) ──
   sow += generateCaliforniaCompliance(yearBuilt);
