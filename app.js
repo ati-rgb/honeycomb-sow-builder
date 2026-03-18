@@ -1472,6 +1472,82 @@ function getIncludedNarrativeItems(inst, data, tIdx) {
   return items;
 }
 
+// ============================================================
+// CALIFORNIA COMPLIANCE — mandatory on every document
+// ============================================================
+function generateCaliforniaCompliance(yearBuilt) {
+  let html = `<h2>CALIFORNIA COMPLIANCE</h2>`;
+
+  // ── LEAD AND ASBESTOS ──
+  html += `<div class="compliance-section"><div class="compliance-heading">LEAD AND ASBESTOS</div>`;
+  const yr = parseInt(yearBuilt);
+  if (yr && yr < 1978) {
+    html += `<p>This property was constructed before 1978. California law requires contractors to follow lead-safe work practices on all renovation, repair, and painting projects. The contractor is responsible for compliance with EPA RRP rules and California OSHA requirements for lead-safe work practices. Honeycomb will provide the EPA lead disclosure pamphlet to the homeowner prior to construction start. No sanding, cutting, or demolition of painted surfaces may occur without compliance with these requirements.</p>`;
+  } else {
+    html += `<p>Structure built 1978 or later. Lead and asbestos disclosure requirements under EPA RRP rules do not apply. If suspect materials are encountered during demolition, stop work and notify Honeycomb immediately.</p>`;
+  }
+  html += `</div>`;
+
+  // ── LIEN RIGHTS NOTIFICATION ──
+  html += `<div class="compliance-section"><div class="compliance-heading">LIEN RIGHTS NOTIFICATION</div>`;
+  html += `<p><strong>NOTICE TO OWNER:</strong> Under California law, those who furnish labor, services, equipment, or materials for this project may have a claim against the property if they are not paid. This claim is known as a mechanic\u2019s lien. If a mechanic\u2019s lien is recorded against your property, it could result in loss of the property. You may wish to protect yourself against this consequence by requesting your contractor to obtain a lien release from all persons who furnish labor, services, equipment, or materials for this project. A preliminary 20-day notice is required to preserve lien rights in California. Subcontractors and material suppliers must serve this notice within 20 days of first furnishing labor or materials.</p>`;
+  html += `</div>`;
+
+  // ── TITLE 24 ENERGY COMPLIANCE ──
+  // Check if any scope items trigger Title 24
+  const title24Keywords = ['window', 'door', 'hvac', 'duct', 'lighting', 'light', 'recessed', 'pendant', 'insulation', 'water heater', 'mini-split'];
+  let title24Triggered = false;
+  moduleInstances.forEach(inst => {
+    const data = scopeData[inst.key] || {};
+    inst.trades.forEach((trade, tIdx) => {
+      const tradeData = data[tIdx] || {};
+      Object.entries(tradeData).forEach(([iIdx, itemData]) => {
+        if (!itemData.included) return;
+        const itemDef = trade.items[parseInt(iIdx)];
+        if (!itemDef) return;
+        const nameLC = itemDef.name.toLowerCase();
+        const tradeLC = trade.name.toLowerCase();
+        if (title24Keywords.some(kw => nameLC.includes(kw) || tradeLC.includes(kw))) {
+          title24Triggered = true;
+        }
+      });
+    });
+  });
+
+  html += `<div class="compliance-section"><div class="compliance-heading">TITLE 24 ENERGY COMPLIANCE</div>`;
+  if (title24Triggered) {
+    html += `<p>This scope includes work that triggers California Title 24 energy compliance requirements. Honeycomb will confirm compliance requirements with the permitting authority prior to permit submission. Any compliance measures required will be incorporated into the relevant trade scope by written revision before work begins. Contractors must not proceed with triggered work until Title 24 compliance measures are confirmed in writing by Honeycomb.</p>`;
+  } else {
+    html += `<p>No Title 24 energy compliance triggers identified in this scope. If during construction any work is added that includes window or door replacement, HVAC equipment or ductwork, lighting changes, insulation, or water heater replacement, notify Honeycomb before proceeding.</p>`;
+  }
+  html += `</div>`;
+
+  // ── OSHA AND DUST CONTROL ──
+  // Check if demolition is in scope
+  let hasDemolition = false;
+  moduleInstances.forEach(inst => {
+    const data = scopeData[inst.key] || {};
+    inst.trades.forEach((trade, tIdx) => {
+      if (trade.name.toLowerCase().includes('demolition') || (trade.sub && trade.sub.toLowerCase() === 'demo')) {
+        const tradeData = data[tIdx] || {};
+        if (Object.values(tradeData).some(item => item.included)) {
+          hasDemolition = true;
+        }
+      }
+    });
+  });
+
+  html += `<div class="compliance-section"><div class="compliance-heading">OSHA AND DUST CONTROL</div>`;
+  if (hasDemolition) {
+    html += `<p>All demolition work must comply with California OSHA requirements for dust control and debris management. Contractor must use appropriate containment and HEPA filtration where required. Contractor is responsible for compliance with applicable air quality regulations. Failure to comply is the contractor\u2019s sole responsibility.</p>`;
+  } else {
+    html += `<p>No demolition in this scope. If demolition is added by change order, OSHA dust and debris requirements apply.</p>`;
+  }
+  html += `</div>`;
+
+  return html;
+}
+
 function generateSOW() {
   const projectName = document.getElementById('projectName').value || 'Untitled Project';
   const address = document.getElementById('propertyAddress').value || '';
@@ -1493,6 +1569,9 @@ function generateSOW() {
     <strong>Date:</strong> ${today}<br>
     ${designFirm ? `<strong>Design:</strong> ${designFirm}` : ''}
   </div>`;
+
+  // ── CALIFORNIA COMPLIANCE (mandatory, every document) ──
+  sow += generateCaliforniaCompliance(yearBuilt);
 
   // Each module
   moduleInstances.forEach(inst => {
