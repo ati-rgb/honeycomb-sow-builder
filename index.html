@@ -596,6 +596,96 @@ header .project-badge {
   color: #E53E3E;
 }
 
+.sow-version-tab {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+.sow-version-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--gold);
+}
+.sow-version-tab:hover {
+  color: var(--navy);
+}
+.sow-output .sow-tldr {
+  background: #F7FAFC;
+  border: 1px solid #CBD5E0;
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 8px 0 16px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.sow-output .sow-tldr strong {
+  color: var(--navy);
+}
+.sow-output .sow-tldr .tldr-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--navy);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E2E8F0;
+}
+.sow-output .sow-internal-block {
+  background: #FFF5F5;
+  border: 2px dashed #E53E3E;
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.sow-output .sow-internal-block .internal-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #E53E3E;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sow-output .sow-internal-block .field-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 4px;
+  margin: 4px 0;
+}
+.sow-output .sow-internal-block .field-label {
+  font-weight: 600;
+  color: #4A5568;
+}
+.sow-output .sow-internal-block .field-value {
+  color: #718096;
+  border-bottom: 1px dotted #CBD5E0;
+  min-height: 18px;
+}
+.sow-output .sow-draw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 12px 0;
+}
+.sow-output .sow-draw-table th {
+  background: #FED7D7;
+  color: #742A2A;
+  padding: 8px 6px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.sow-output .sow-draw-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #E2E8F0;
+  min-height: 20px;
+}
+
 .sow-output .sow-preliminary-warning {
   background: #FED7D7;
   border: 2px solid #E53E3E;
@@ -1117,8 +1207,27 @@ header .project-badge {
         </div>
       </div>
 
+      <!-- Version Selector -->
+      <div class="card" style="background: #F7FAFC; border: 1px solid #E2E8F0; margin-top: 16px;">
+        <h3 style="margin: 0 0 12px 0; font-size: 15px; color: var(--navy);">Which version do you need?</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid #CBD5E0; border-radius:8px; cursor:pointer; background:white;">
+            <input type="checkbox" id="genClient" checked> <div><strong style="font-size:13px;">Client Version</strong><br><span style="font-size:11px; color:var(--muted);">Plain language for homeowner</span></div>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid #CBD5E0; border-radius:8px; cursor:pointer; background:white;">
+            <input type="checkbox" id="genTrade" checked> <div><strong style="font-size:13px;">Trade Version</strong><br><span style="font-size:11px; color:var(--muted);">Full technical for subs</span></div>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid #CBD5E0; border-radius:8px; cursor:pointer; background:white;">
+            <input type="checkbox" id="genInternal" checked> <div><strong style="font-size:13px;">Internal Version</strong><br><span style="font-size:11px; color:var(--muted);">Honeycomb team + bid tracking</span></div>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid #CBD5E0; border-radius:8px; cursor:pointer; background:white;">
+            <input type="checkbox" id="genAll" onchange="if(this.checked){document.getElementById('genClient').checked=true;document.getElementById('genTrade').checked=true;document.getElementById('genInternal').checked=true;}"> <div><strong style="font-size:13px;">All Three</strong><br><span style="font-size:11px; color:var(--muted);">Generate all versions</span></div>
+          </label>
+        </div>
+      </div>
+
       <div style="text-align: center; margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-        <button class="btn btn-gold" onclick="generateSOW()" style="font-size: 18px; padding: 16px 40px;" id="btnGenerate">
+        <button class="btn btn-gold" onclick="generateAllVersions()" style="font-size: 18px; padding: 16px 40px;" id="btnGenerate">
           Generate Scope of Work
         </button>
         <button class="btn btn-outline" onclick="promptRevision()" style="font-size: 16px; padding: 14px 28px; display: none;" id="btnRevision">
@@ -1129,11 +1238,15 @@ header .project-badge {
 
     <div id="sowOutputContainer" style="display: none;">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h2 style="margin: 0;">Generated Scope of Work</h2>
-          <button class="btn btn-primary" onclick="copySOW()">Copy to Clipboard</button>
+          <button class="btn btn-primary" onclick="copyActiveSOW()">Copy to Clipboard</button>
         </div>
-        <div class="sow-output" id="sowOutput"></div>
+        <div id="sowVersionTabs" style="display:flex; gap:4px; margin-bottom:16px; border-bottom:2px solid #E2E8F0; padding-bottom:0;">
+        </div>
+        <div class="sow-output" id="sowOutputClient" style="display:none;"></div>
+        <div class="sow-output" id="sowOutputTrade" style="display:none;"></div>
+        <div class="sow-output" id="sowOutputInternal" style="display:none;"></div>
       </div>
     </div>
 

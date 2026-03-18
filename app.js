@@ -130,7 +130,7 @@ function promptRevision() {
   updateRevisionHistoryDisplay();
 
   // Generate new version
-  generateSOW();
+  generateAllVersions();
 }
 
 function updateRevisionHistoryDisplay() {
@@ -1650,7 +1650,163 @@ function generateCaliforniaCompliance(yearBuilt) {
   return html;
 }
 
-function generateSOW() {
+// ============================================================
+// TL;DR DATA — Quick-reference summaries for Trade Version
+// ============================================================
+const TRADE_TLDR = {
+  'Demolition': {
+    doing: 'Remove all existing materials as listed in the scope items below',
+    supplying: 'Dumpster, labor, and hauling. Honeycomb provides floor protection and dust barriers',
+    done: 'All listed items removed, debris hauled, area broom clean and ready for rough trades',
+    stopWork: 'Do not begin demolition before confirming salvage list with Honeycomb. Do not remove structural elements without engineer approval on file'
+  },
+  'Framing': {
+    doing: 'Complete all framing modifications, blocking, and structural work per plans',
+    supplying: 'All framing lumber, fasteners, hardware, and structural connectors',
+    done: 'All framing complete, blocking installed per schedule, framing inspection passed, dimensions verified',
+    stopWork: 'Do not close any walls before Honeycomb inspection and photo documentation. Do not proceed without engineer-stamped plans for structural work'
+  },
+  'Plumbing': {
+    doing: 'Rough in all water supply, drain, waste, and vent lines per fixture specifications',
+    supplying: 'All rough plumbing materials including pipe, fittings, valves, and stubs',
+    done: 'All rough-in locations match specs, inspection passed, stubs capped and labeled',
+    stopWork: 'Do not stub out before confirming fixture specs with Honeycomb. Do not cover any plumbing before inspection'
+  },
+  'Electrical': {
+    doing: 'Rough in all circuits, outlets, and switch locations per electrical plan',
+    supplying: 'All rough electrical materials including wire, boxes, conduit, and panel breakers',
+    done: 'All circuits roughed in per plan, inspection passed, circuits labeled at panel',
+    stopWork: 'Do not close any walls before electrical inspection. Do not proceed without confirmed fixture and appliance specs'
+  },
+  'HVAC': {
+    doing: 'Install or modify ductwork and mechanical ventilation per plans',
+    supplying: 'All ductwork, fittings, equipment, and exhaust components',
+    done: 'All ductwork installed, inspection passed, exhaust fans ducted to exterior and tested',
+    stopWork: 'Do not cover ductwork before inspection. Do not install equipment without confirming location with Honeycomb'
+  },
+  'Drywall': {
+    doing: 'Install, tape, and finish all drywall surfaces to specified level',
+    supplying: 'All drywall sheets, tape, mud, corner bead, and finishing materials',
+    done: 'All surfaces finished to specified level, no visible seams or fastener heads, ready for paint',
+    stopWork: 'Do not hang drywall before all rough inspections have passed. Do not proceed before insulation inspection if applicable'
+  },
+  'Waterproofing': {
+    doing: 'Waterproof shower pan, walls, bench, and niches per specified method',
+    supplying: 'All waterproofing membranes, sealants, and test materials',
+    done: 'Flood test passed and documented with photograph, Honeycomb written sign-off on file',
+    stopWork: 'Do not tile before receiving written flood test sign-off from Honeycomb. Do not proceed with flood test before Honeycomb is notified'
+  },
+  'Tile': {
+    doing: 'Install floor and shower tile per the layout approved by Honeycomb',
+    supplying: 'Adhesive, grout, grout sealer, and all installation materials. Tile supplied by Honeycomb',
+    done: 'All tile installed, grouted, sealed, no lippage exceeding 1/16 inch on floor or 1/32 inch on wall, all debris removed',
+    stopWork: 'Do not start tile before receiving written flood test sign-off. Do not grout before layout is approved on site'
+  },
+  'Cabinetry': {
+    doing: 'Install all cabinets plumb, level, and per approved layout',
+    supplying: 'Installation hardware, shims, screws, and fillers. Cabinets supplied by Honeycomb',
+    done: 'All cabinets plumb and level within 1/8 inch, doors and drawers functioning, hardware installed',
+    stopWork: 'Do not install cabinets before confirming floor is level and drywall is complete. Do not drill countertop template holes without Honeycomb approval'
+  },
+  'Countertops': {
+    doing: 'Template, fabricate, and install countertops per specifications',
+    supplying: 'Countertop material, fabrication, adhesive, and caulk. Material selected by owner',
+    done: 'Countertop installed with no chips or cracks, seams tight, sink cutout correct, caulk complete',
+    stopWork: 'Do not template before cabinets are confirmed level by Honeycomb. Do not cut sink hole before confirming sink model'
+  },
+  'Finish Plumbing': {
+    doing: 'Install all plumbing fixtures and connect to rough-in stubs',
+    supplying: 'Supply lines, wax rings, caulk, and connection hardware. Fixtures supplied by owner',
+    done: 'All fixtures installed and operational, no leaks after 24 hours, water pressure tested',
+    stopWork: 'Do not install fixtures before countertops and tile are complete. Do not connect disposal before electrical is confirmed live'
+  },
+  'Finish Electrical': {
+    doing: 'Install all light fixtures, devices, and covers',
+    supplying: 'Wire nuts, plates, and mounting hardware. Fixtures supplied by owner',
+    done: 'All fixtures and devices installed and operational, final inspection passed',
+    stopWork: 'Do not install fixtures before paint is complete. Do not energize circuits before final inspection'
+  },
+  'Painting': {
+    doing: 'Prep, prime, and paint all surfaces to specified coats and sheen',
+    supplying: 'All paint, primer, caulk, tape, and application materials. Colors selected by owner',
+    done: 'All surfaces painted, no visible marks on finish coat, lines clean at transitions, no paint on adjacent surfaces',
+    stopWork: 'Do not paint before drywall finish is approved by Honeycomb. Do not remove masking before Honeycomb inspection'
+  },
+  'Finish Carpentry': {
+    doing: 'Install all trim, baseboards, door hardware, and millwork',
+    supplying: 'All trim, nails, filler, caulk, and adhesive. Trim material supplied by Honeycomb or owner',
+    done: 'All trim installed, joints tight, nail holes filled and sanded, ready for paint',
+    stopWork: 'Do not install trim before flooring is complete. Do not cut trim without confirming profile with Honeycomb'
+  },
+  'Flooring': {
+    doing: 'Prepare subfloor and install flooring per manufacturer requirements',
+    supplying: 'Adhesive, underlayment, transitions, and installation materials. Flooring material supplied by owner',
+    done: 'Flooring installed per manufacturer spec, transitions installed, debris removed',
+    stopWork: 'Do not install before subfloor flatness is confirmed. Do not remove floor protection until Honeycomb authorizes'
+  },
+  'Final': {
+    doing: 'Complete final cleanup, testing, punch list, and client walkthrough',
+    supplying: 'Cleaning supplies and touch-up materials',
+    done: 'Property in move-in ready condition, all surfaces clean, no construction debris remaining',
+    stopWork: 'Do not schedule client walkthrough before all punch list items are complete and approved by Honeycomb'
+  },
+  'Glass': {
+    doing: 'Measure, fabricate, and install glass shower enclosure per specifications',
+    supplying: 'Glass panels, hardware, silicone, and all mounting materials',
+    done: 'Enclosure installed plumb and level, hardware functioning, door swings freely, silicone complete',
+    stopWork: 'Do not measure before tile is complete and cured. Do not install before confirming hardware finish with Honeycomb'
+  },
+  'Appliances': {
+    doing: 'Install all appliances and connect to utilities',
+    supplying: 'Connection hardware, gas flex lines, and power cords as needed. Appliances supplied by owner',
+    done: 'All appliances installed, connected, tested, protective film removed, warranties provided',
+    stopWork: 'Do not install before cabinets and countertops are complete. Do not connect gas without confirming shut-off valve is accessible'
+  }
+};
+
+// ============================================================
+// TL;DR RENDER HELPER
+// ============================================================
+function renderTLDR(tradeName) {
+  const name = tradeName.toLowerCase();
+  let tldr = null;
+  for (const [key, val] of Object.entries(TRADE_TLDR)) {
+    if (name.includes(key.toLowerCase())) { tldr = val; break; }
+  }
+  if (!tldr) return '';
+  return `<div class="sow-tldr"><div class="tldr-title">TL;DR — ${tradeName.toUpperCase()}</div>
+    <strong>What you are doing:</strong> ${typeof tldr.doing === 'function' ? tldr.doing() : tldr.doing}<br>
+    <strong>What you are responsible for supplying:</strong> ${tldr.supplying}<br>
+    <strong>What done looks like:</strong> ${tldr.done}<br>
+    <strong>What you must not do before notifying Honeycomb:</strong> ${tldr.stopWork}
+  </div>`;
+}
+
+// ============================================================
+// CLIENT NARRATIVE HELPER — strips technical jargon
+// ============================================================
+function toNarrativeClient(itemName, detail, notes, qty) {
+  if (narrativeMap[itemName]) {
+    const result = narrativeMap[itemName](detail, notes, qty);
+    if (result === null) return null;
+    let text = result;
+    text = text.replace(/<span class="no-plan-ref">.*?<\/span>/g, '');
+    text = text.replace(/\[Sheet.*?\]/g, '');
+    text = text.replace(/\[NO PLAN REFERENCE.*?\]/g, '');
+    text = text.replace(/per architectural plans/g, 'per your approved design');
+    text = text.replace(/per code/g, 'to meet building requirements');
+    text = text.replace(/per plans/g, 'per your approved design');
+    text = text.replace(/per design plans/g, 'as designed');
+    text = text.replace(/GFCI-protected/g, 'safety');
+    text = text.replace(/rough-in/g, 'preparation');
+    return text;
+  }
+  let text = itemName;
+  if (detail && detail !== 'Yes' && detail !== 'N/A') text += ` (${detail})`;
+  return text;
+}
+
+function generateSOW(returnOnly) {
   const projectName = document.getElementById('projectName').value || 'Untitled Project';
   const address = document.getElementById('propertyAddress').value || '';
   const client = document.getElementById('clientName').value || '';
@@ -1737,10 +1893,13 @@ function generateSOW() {
         const items = getIncludedNarrativeItems(inst, data, tIdx);
         if (items.length === 0) return;
         sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">${secNum}. ${trade.name}:</span></div>`;
+        // Add TL;DR for this trade
+        sow += renderTLDR(trade.name);
         sow += `<ol class="narrative-items">`;
         items.forEach(text => { sow += `<li>${text}</li>`; });
         sow += `</ol>`;
         sow += renderTradeExclusionsAndCompletion(inst, [tIdx]);
+        sow += `<!-- INTERNAL_NOTES_MARKER:${trade.name} -->`;
         sow += `</div>`;
         secNum++;
       });
@@ -1776,6 +1935,14 @@ function generateSOW() {
 
       sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">${secNum}. ${phase.heading}:</span></div>`;
 
+      // Add TL;DR for each trade in this phase
+      phase.trades.forEach(tIdx => {
+        const trade = inst.trades[tIdx];
+        if (trade && allPhaseItems[tIdx]) {
+          sow += renderTLDR(trade.name);
+        }
+      });
+
       if (phase.subSections && phase.trades.length > 1) {
         // Multiple trades grouped with sub-sections
         let hasMultipleActive = Object.keys(allPhaseItems).length > 1;
@@ -1807,6 +1974,7 @@ function generateSOW() {
 
       // Add exclusions and completion criteria for this phase's trades
       sow += renderTradeExclusionsAndCompletion(inst, phase.trades);
+      sow += `<!-- INTERNAL_NOTES_MARKER:${phase.heading} -->`;
 
       sow += `</div>`;
       secNum++;
@@ -1955,13 +2123,242 @@ function generateSOW() {
     sow += `<div class="sow-notes"><strong>Additional Notes:</strong><br>${notes}</div>`;
   }
 
-  document.getElementById('sowOutput').innerHTML = sow;
+  if (returnOnly) return sow;
+  document.getElementById('sowOutputTrade').innerHTML = sow;
   document.getElementById('sowOutputContainer').style.display = 'block';
   document.getElementById('sowOutputContainer').scrollIntoView({ behavior: 'smooth' });
 }
 
-function copySOW() {
-  const el = document.getElementById('sowOutput');
+// ============================================================
+// CLIENT VERSION — plain language for homeowner
+// ============================================================
+function generateClientSOW() {
+  const projectName = document.getElementById('projectName').value || 'Untitled Project';
+  const address = document.getElementById('propertyAddress').value || '';
+  const client = document.getElementById('clientName').value || '';
+  const yearBuilt = document.getElementById('yearBuilt').value || '';
+  const version = document.getElementById('sowVersion').value || '1.0';
+  const status = document.getElementById('sowStatus').value || 'PRELIMINARY';
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  let sow = `<h1 style="font-size:24px;">Honeycomb Design and Remodeling<br>Scope of Work — Client Copy</h1>`;
+  sow += `<div class="sow-meta">
+    <strong>Project:</strong> ${address}<br>
+    <strong>Prepared for:</strong> ${client}<br>
+    <strong>Date:</strong> ${today}<br>
+    <strong>Version:</strong> ${version} | <strong>Status:</strong> ${status}
+  </div>`;
+
+  // Project Overview
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">Project Overview</h2>`;
+  const moduleNames = moduleInstances.map(i => i.label).join(', ');
+  sow += `<p style="line-height:1.7; color:#4A5568;">This scope of work describes the renovation of your home at ${address}. The project includes work in the following areas: ${moduleNames}. This document outlines what will be done, what materials are needed, and what to expect during the construction process.</p>`;
+
+  // Room-by-room descriptions
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">What We Are Doing</h2>`;
+  moduleInstances.forEach(inst => {
+    const data = scopeData[inst.key] || {};
+    let hasItems = false;
+    Object.values(data).forEach(trade => {
+      Object.values(trade).forEach(item => { if (item.included) hasItems = true; });
+    });
+    if (!hasItems) return;
+
+    let title = inst.label;
+    if (inst.id === 'bathroom') {
+      const bn = document.getElementById(`bathname-${inst.key}`)?.value;
+      if (bn) title = bn;
+    }
+
+    sow += `<h3 style="font-size:16px; color:var(--navy); margin-top:20px;">${title}</h3>`;
+    sow += `<p style="line-height:1.7; color:#4A5568;">`;
+
+    // Collect all included items across all trades for this module
+    let descriptions = [];
+    inst.trades.forEach((trade, tIdx) => {
+      const tradeData = data[tIdx] || {};
+      Object.entries(tradeData).forEach(([iIdx, itemData]) => {
+        if (!itemData.included) return;
+        const itemDef = trade.items[parseInt(iIdx)];
+        if (!itemDef) return;
+        let text = toNarrativeClient(itemDef.name, itemData.detail, itemData.notes, itemData.qty);
+        if (text) descriptions.push(text);
+      });
+    });
+
+    if (descriptions.length > 0) {
+      sow += `In this space, we will: `;
+      sow += descriptions.map((d, i) => i === 0 ? d.charAt(0).toLowerCase() + d.slice(1) : d.toLowerCase()).join('; ');
+      sow += '.';
+    }
+    sow += `</p>`;
+  });
+
+  // Materials and Selections
+  const ownerMats = {
+    'kitchen': ['Kitchen cabinets and hardware', 'Countertop material and color', 'All kitchen appliances', 'Backsplash tile', 'Flooring material', 'Paint colors', 'Sink and faucet', 'Light fixtures'],
+    'bathroom': ['Vanity and vanity top', 'Toilet, sink, faucet, and shower fixtures', 'Floor and wall tile', 'Paint colors', 'Light fixtures', 'Mirror and accessories', 'Shower glass (if applicable)'],
+    'laundry': ['Washer and dryer', 'Cabinets and countertop', 'Flooring', 'Paint colors'],
+    'paint': ['Paint colors for all rooms'],
+    'extpaint': ['Exterior paint colors']
+  };
+
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">Materials and Selections</h2>`;
+  sow += `<p style="line-height:1.7; color:#4A5568;">Honeycomb provides all labor and construction materials (framing, drywall, plumbing and electrical supplies, etc.). You are responsible for selecting and providing the finishing materials listed below. We are happy to help guide your selections.</p>`;
+  moduleInstances.forEach(inst => {
+    const mats = ownerMats[inst.id];
+    if (mats && mats.length > 0) {
+      sow += `<p style="margin:8px 0 4px 0;"><strong>${inst.label}:</strong></p><ul style="margin:0 0 8px 20px; color:#4A5568;">`;
+      mats.forEach(m => { sow += `<li>${m}</li>`; });
+      sow += `</ul>`;
+    }
+  });
+
+  // What to Expect
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">What to Expect During Construction</h2>`;
+  sow += `<p style="line-height:1.7; color:#4A5568;">Your renovation will proceed through the following phases. Each phase must be completed and inspected before the next begins.</p>`;
+  sow += `<ol style="line-height:1.8; color:#4A5568;">`;
+  sow += `<li><strong>Demolition</strong> — Removal of existing materials. Your home will be dusty and noisy during this phase. We install dust barriers and floor protection before beginning. Typically 1\u20133 days depending on scope.</li>`;
+  sow += `<li><strong>Rough Construction</strong> — Framing, plumbing pipes, electrical wiring, and ductwork are installed inside the walls. The space will look unfinished. This phase includes city inspections. Typically 1\u20133 weeks.</li>`;
+  sow += `<li><strong>Closing Walls</strong> — Insulation, drywall, and initial wall finishing. The rooms begin to take shape. Typically 1\u20132 weeks.</li>`;
+  sow += `<li><strong>Finishes</strong> — Tile, cabinets, countertops, flooring, paint, and fixtures are installed. This is when your selections come to life. Typically 2\u20134 weeks depending on scope.</li>`;
+  sow += `<li><strong>Final Details</strong> — Hardware, touch-ups, cleaning, and final inspections. We walk through the completed project together before handover. Typically 3\u20135 days.</li>`;
+  sow += `</ol>`;
+
+  // Change Orders
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">Changes During Construction</h2>`;
+  sow += `<p style="line-height:1.7; color:#4A5568;">If you would like to change anything after this scope is approved \u2014 whether adding something new, upgrading a material, or modifying the layout \u2014 Honeycomb will prepare a written change order showing the cost and time impact before any work proceeds. No changes are made without your written approval.</p>`;
+
+  // Payment Schedule
+  sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">Payment Schedule</h2>`;
+  sow += `<p style="line-height:1.7; color:#4A5568;">Payments are requested at specific project milestones. You will only be asked to pay after work has been completed and verified. The typical milestone schedule is:</p>`;
+  sow += `<ul style="line-height:1.8; color:#4A5568;">`;
+  sow += `<li>Upon contract signing (deposit)</li>`;
+  sow += `<li>When demolition is complete and verified</li>`;
+  sow += `<li>When rough construction passes city inspection</li>`;
+  sow += `<li>When cabinets and tile are installed</li>`;
+  sow += `<li>Upon project completion and final walkthrough</li>`;
+  sow += `</ul>`;
+  sow += `<p style="line-height:1.7; color:#4A5568;">Specific payment amounts will be included in your contract.</p>`;
+
+  // California Compliance (simplified for homeowner)
+  const yr = parseInt(yearBuilt);
+  if (yr && yr < 1978) {
+    sow += `<h2 style="font-size:18px; border-bottom:2px solid var(--gold); padding-bottom:8px;">A Note About Your Home</h2>`;
+    sow += `<p style="line-height:1.7; color:#4A5568;">Because your home was built before 1978, there is a possibility that some materials contain lead-based paint. This is common in homes of this era and is nothing to be alarmed about. California law requires us to follow specific safety practices when working on surfaces that may contain lead. This means our crew will use protective coverings, proper ventilation, and careful cleanup procedures throughout the project. We will provide you with an EPA informational pamphlet before construction begins. These practices protect you, your family, and our workers.</p>`;
+  }
+
+  return sow;
+}
+
+// ============================================================
+// THREE-VERSION ORCHESTRATION
+// ============================================================
+function generateAllVersions() {
+  const doClient = document.getElementById('genClient').checked;
+  const doTrade = document.getElementById('genTrade').checked;
+  const doInternal = document.getElementById('genInternal').checked;
+
+  if (!doClient && !doTrade && !doInternal) {
+    alert('Please select at least one version to generate.');
+    return;
+  }
+
+  // Show revision button after first generation
+  sowGenerated = true;
+  document.getElementById('btnRevision').style.display = 'inline-block';
+
+  // Build tabs
+  let tabs = '';
+  let firstTab = '';
+
+  if (doClient) {
+    const clientHTML = generateClientSOW();
+    document.getElementById('sowOutputClient').innerHTML = clientHTML;
+    document.getElementById('sowOutputClient').style.display = 'none';
+    tabs += `<button class="sow-version-tab" onclick="switchSOWTab('Client')" id="tab-Client">Client Version</button>`;
+    if (!firstTab) firstTab = 'Client';
+  }
+
+  if (doTrade) {
+    generateSOW(); // This writes to sowOutputTrade
+    document.getElementById('sowOutputTrade').style.display = 'none';
+    tabs += `<button class="sow-version-tab" onclick="switchSOWTab('Trade')" id="tab-Trade">Trade Version</button>`;
+    if (!firstTab) firstTab = 'Trade';
+  }
+
+  if (doInternal) {
+    const tradeHTML = generateSOW(true);
+    let internalHTML = tradeHTML;
+
+    // Add internal header
+    const internalHeaderHTML = `<div class="sow-internal-block"><div class="internal-title">HONEYCOMB INTERNAL DOCUMENT \u2014 DO NOT SHARE WITH CLIENT OR TRADE</div><p style="margin:4px 0; font-size:13px;">This version contains bid tracking, cost data, and internal notes for Honeycomb team use only.</p></div>`;
+    internalHTML = internalHTML.replace('<h1>', internalHeaderHTML + '<h1>');
+
+    // Replace internal notes markers with actual internal blocks
+    internalHTML = internalHTML.replace(/<!-- INTERNAL_NOTES_MARKER:(.*?) -->/g, (match, phaseName) => {
+      return `<div class="sow-internal-block">
+        <div class="internal-title">INTERNAL \u2014 DO NOT SHARE</div>
+        <div class="field-row"><span class="field-label">Bid status:</span><span class="field-value">&nbsp;</span></div>
+        <div class="field-row"><span class="field-label">Bid type:</span><span class="field-value">&nbsp;</span></div>
+        <div class="field-row"><span class="field-label">If anchored, amount shared:</span><span class="field-value">&nbsp;</span></div>
+        <div class="field-row"><span class="field-label">Vendor/trade assigned:</span><span class="field-value">&nbsp;</span></div>
+        <div class="field-row"><span class="field-label">Contact:</span><span class="field-value">&nbsp;</span></div>
+        <div class="field-row"><span class="field-label">Notes:</span><span class="field-value">&nbsp;</span></div>
+      </div>`;
+    });
+
+    // Add draw tracking table
+    internalHTML += `<div class="sow-internal-block">
+      <div class="internal-title">INTERNAL \u2014 DRAW TRACKING (Andrea's Use \u2014 Do Not Share)</div>
+      <table class="sow-draw-table">
+        <thead><tr><th>Milestone</th><th>Confirmed By</th><th>Date Confirmed</th><th>Draw Amount</th><th>Invoice Prepared</th><th>Invoice Sent</th><th>Payment Received</th></tr></thead>
+        <tbody>
+          <tr><td>Contract signing (deposit)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Demolition complete</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Rough inspections passed</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Cabinets and tile installed</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Substantial completion</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Final walkthrough approved</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>`;
+
+    document.getElementById('sowOutputInternal').innerHTML = internalHTML;
+    document.getElementById('sowOutputInternal').style.display = 'none';
+    tabs += `<button class="sow-version-tab" onclick="switchSOWTab('Internal')" id="tab-Internal">Internal Version</button>`;
+    if (!firstTab) firstTab = 'Internal';
+  }
+
+  document.getElementById('sowVersionTabs').innerHTML = tabs;
+  document.getElementById('sowOutputContainer').style.display = 'block';
+
+  // Activate first tab
+  if (firstTab) switchSOWTab(firstTab);
+  document.getElementById('sowOutputContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function switchSOWTab(type) {
+  // Hide all
+  ['Client', 'Trade', 'Internal'].forEach(t => {
+    const el = document.getElementById('sowOutput' + t);
+    if (el) el.style.display = 'none';
+    const tab = document.getElementById('tab-' + t);
+    if (tab) tab.classList.remove('active');
+  });
+  // Show selected
+  const el = document.getElementById('sowOutput' + type);
+  if (el) el.style.display = 'block';
+  const tab = document.getElementById('tab-' + type);
+  if (tab) tab.classList.add('active');
+  // Store active tab for copy
+  window._activeSOWTab = type;
+}
+
+function copyActiveSOW() {
+  const type = window._activeSOWTab || 'Trade';
+  const el = document.getElementById('sowOutput' + type);
+  if (!el) return;
   const range = document.createRange();
   range.selectNodeContents(el);
   const sel = window.getSelection();
@@ -1969,7 +2366,17 @@ function copySOW() {
   sel.addRange(range);
   document.execCommand('copy');
   sel.removeAllRanges();
-  alert('SOW copied to clipboard! You can paste it into a Word document or share it directly.');
+  // Flash feedback
+  const btn = document.querySelector('#sowOutputContainer .btn-primary');
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }
+}
+
+function copySOW() {
+  copyActiveSOW();
 }
 
 // ============================================================
