@@ -2252,6 +2252,178 @@ function generateClientSOW() {
 }
 
 // ============================================================
+// ESTIMATING INPUT FILE GENERATOR
+// ============================================================
+function generateEstimatingInput() {
+  const address = document.getElementById('propertyAddress').value || 'Unknown';
+  const version = document.getElementById('sowVersion').value || '1.0';
+  const status = document.getElementById('sowStatus').value || 'PRELIMINARY';
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const yearBuilt = document.getElementById('yearBuilt').value || 'Unknown';
+  const projType = document.getElementById('projectType').value || 'Custom';
+  const sf = document.getElementById('totalSF').value || 'NOT PROVIDED';
+  const occupied = document.getElementById('ownerOccupied')?.value || 'UNKNOWN';
+  const yr = parseInt(yearBuilt);
+  const prePre1978 = yr && yr < 1978;
+
+  let openItems = [];
+
+  // Header
+  let html = `<div class="est-header">`;
+  html += `<strong>ESTIMATING INPUT FILE</strong><br>`;
+  html += `Project: ${address}<br>`;
+  html += `Version: ${version}<br>`;
+  html += `Date: ${today}<br>`;
+  html += `Status: ${status}<br>`;
+  html += `Source: generated from SOW v${version}<br><br>`;
+  html += `<em>Note: labor scope and quantities only. The estimating engine prices labor. Materials are handled separately.</em>`;
+  html += `</div>`;
+
+  // Project Basics
+  html += `<div class="est-trade-block">`;
+  html += `<div class="est-trade-name">PROJECT BASICS</div>`;
+  html += `<div class="est-field"><strong>Structure year built:</strong> ${yearBuilt}</div>`;
+  html += `<div class="est-field"><strong>Project type:</strong> ${projType}</div>`;
+  html += `<div class="est-field"><strong>Total scope area in square feet:</strong> ${sf === 'NOT PROVIDED' ? '<span class="est-unknown">NOT PROVIDED</span>' : sf}</div>`;
+  html += `<div class="est-field"><strong>Number of rooms in scope:</strong> ${moduleInstances.length}</div>`;
+  html += `<div class="est-field"><strong>Occupied during construction:</strong> ${occupied === 'Yes - phased approach needed' ? 'YES' : occupied === 'No' ? 'NO' : 'UNKNOWN'}</div>`;
+  if (sf === 'NOT PROVIDED' || !sf) openItems.push('Total scope area in square feet — not provided');
+  html += `</div>`;
+
+  // Trades in Scope
+  html += `<h2 style="font-size:18px; margin-top:24px; border-bottom:2px solid var(--navy); padding-bottom:6px; font-family:monospace;">TRADES IN SCOPE</h2>`;
+
+  moduleInstances.forEach(inst => {
+    const data = scopeData[inst.key] || {};
+    let moduleTitle = inst.label;
+    if (inst.id === 'bathroom') {
+      const bn = document.getElementById(`bathname-${inst.key}`)?.value;
+      if (bn) moduleTitle = bn;
+    }
+
+    inst.trades.forEach((trade, tIdx) => {
+      const tradeData = data[tIdx] || {};
+      const includedItems = [];
+      let quantities = [];
+      let hasUnknownQty = false;
+
+      Object.entries(tradeData).forEach(([iIdx, itemData]) => {
+        if (!itemData.included) return;
+        const itemDef = trade.items[parseInt(iIdx)];
+        if (!itemDef) return;
+
+        let desc = itemDef.name;
+        if (itemData.detail && itemData.detail !== 'Yes') desc += ` (${itemData.detail})`;
+        includedItems.push(desc);
+
+        // Collect quantities
+        if (itemDef.hasQty && itemData.qty) {
+          quantities.push(`${itemDef.name}: ${itemData.qty} ${itemDef.unit || 'EA'}`);
+        } else if (itemDef.hasQty && !itemData.qty) {
+          quantities.push(`${itemDef.name}: <span class="est-unknown">UNKNOWN</span>`);
+          hasUnknownQty = true;
+          openItems.push(`${moduleTitle} — ${trade.name}: ${itemDef.name} quantity unknown`);
+        }
+      });
+
+      if (includedItems.length === 0) return;
+
+      html += `<div class="est-trade-block">`;
+      html += `<div class="est-trade-name">TRADE: ${trade.name} (${moduleTitle})</div>`;
+
+      // Labor Scope
+      html += `<div class="est-field"><strong>LABOR SCOPE:</strong> ${includedItems.join('. ')}.</div>`;
+
+      // Quantities
+      html += `<div class="est-field"><strong>QUANTITIES:</strong>`;
+      if (quantities.length > 0) {
+        html += `<ul style="margin:4px 0 0 20px;">`;
+        quantities.forEach(q => { html += `<li>${q}</li>`; });
+        html += `</ul>`;
+      } else {
+        html += ` Lump sum scope — no unit quantities applicable.`;
+      }
+      html += `</div>`;
+
+      // Complexity Flags
+      let flags = [];
+      if (prePre1978) flags.push('Pre-1978 structure — lead-safe work practices required');
+      if (occupied === 'Yes - phased approach needed') flags.push('Occupied home — phased approach needed');
+      // Check for specific complexity indicators
+      includedItems.forEach(item => {
+        const lc = item.toLowerCase();
+        if (lc.includes('relocat')) flags.push('Relocation work — increased labor');
+        if (lc.includes('custom')) flags.push('Custom work — non-standard labor');
+        if (lc.includes('load-bearing') || lc.includes('structural')) flags.push('Structural work — engineering coordination required');
+        if (lc.includes('curbless')) flags.push('Curbless shower — precision slope work required');
+        if (lc.includes('herringbone') || lc.includes('chevron')) flags.push('Complex pattern layout — increased tile labor');
+        if (lc.includes('level 5')) flags.push('Level 5 drywall finish — premium labor');
+        if (lc.includes('waterfall')) flags.push('Waterfall edge countertop — fabrication complexity');
+      });
+      // Deduplicate
+      flags = [...new Set(flags)];
+
+      html += `<div class="est-field"><strong>COMPLEXITY FLAGS:</strong>`;
+      if (flags.length > 0) {
+        html += `<ul style="margin:4px 0 0 20px;">`;
+        flags.forEach(f => { html += `<li>${f}</li>`; });
+        html += `</ul>`;
+      } else {
+        html += ` None identified — standard conditions.`;
+      }
+      html += `</div>`;
+
+      // Notes
+      let tradeNotes = [];
+      Object.entries(tradeData).forEach(([iIdx, itemData]) => {
+        if (itemData.included && itemData.notes) {
+          const itemDef = trade.items[parseInt(iIdx)];
+          if (itemDef) tradeNotes.push(`${itemDef.name}: ${itemData.notes}`);
+        }
+      });
+      html += `<div class="est-field"><strong>NOTES:</strong> ${tradeNotes.length > 0 ? tradeNotes.join('. ') : 'None.'}</div>`;
+
+      html += `</div>`;
+    });
+  });
+
+  // Open Items
+  if (openItems.length > 0) {
+    html += `<div class="est-open-items">`;
+    html += `<strong>OPEN ITEMS — RESOLVE BEFORE FINAL ESTIMATE</strong>`;
+    html += `<ul style="margin:8px 0 0 20px;">`;
+    openItems.forEach(item => { html += `<li>${item}</li>`; });
+    html += `</ul>`;
+    html += `</div>`;
+  } else {
+    html += `<div class="est-summary"><strong>All quantities confirmed. Estimate can proceed.</strong></div>`;
+  }
+
+  // Summary notice
+  const addrSlug = address.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+  const filename = `${addrSlug}-Estimating-Input-v${version}.md`;
+
+  html += `<div class="est-summary">`;
+  html += `<strong>ESTIMATING INPUT FILE GENERATED</strong><br>`;
+  html += `Saved as: <code>${filename}</code><br><br>`;
+  if (openItems.length > 0) {
+    html += `<strong>Open items before estimate can be finalized:</strong><br>`;
+    html += `<ul style="margin:4px 0 8px 20px;">`;
+    openItems.forEach(item => { html += `<li>${item}</li>`; });
+    html += `</ul>`;
+  }
+  html += `<strong>Recommended next step:</strong> send this file to the estimating engine. `;
+  if (openItems.length > 0) {
+    html += `For any open items, resolve before requesting a final estimate. A preliminary estimate can be run with UNKNOWN quantities flagged as ranges.`;
+  } else {
+    html += `All quantities confirmed — request final estimate.`;
+  }
+  html += `</div>`;
+
+  return html;
+}
+
+// ============================================================
 // THREE-VERSION ORCHESTRATION
 // ============================================================
 function generateAllVersions() {
@@ -2330,6 +2502,12 @@ function generateAllVersions() {
     if (!firstTab) firstTab = 'Internal';
   }
 
+  // Always generate Estimating Input
+  const estHTML = generateEstimatingInput();
+  document.getElementById('sowOutputEstimating').innerHTML = estHTML;
+  document.getElementById('sowOutputEstimating').style.display = 'none';
+  tabs += `<button class="sow-version-tab" onclick="switchSOWTab('Estimating')" id="tab-Estimating">Estimating Input</button>`;
+
   document.getElementById('sowVersionTabs').innerHTML = tabs;
   document.getElementById('sowOutputContainer').style.display = 'block';
 
@@ -2340,7 +2518,7 @@ function generateAllVersions() {
 
 function switchSOWTab(type) {
   // Hide all
-  ['Client', 'Trade', 'Internal'].forEach(t => {
+  ['Client', 'Trade', 'Internal', 'Estimating'].forEach(t => {
     const el = document.getElementById('sowOutput' + t);
     if (el) el.style.display = 'none';
     const tab = document.getElementById('tab-' + t);
