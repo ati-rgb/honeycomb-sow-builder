@@ -1270,7 +1270,89 @@ const TRADE_COMPLETION = {
   'Appliances': 'All appliances are installed per manufacturer specifications. All connections are tested and operational. All appliances are clean and free of protective film. Manufacturer warranties and operating instructions have been provided.'
 };
 
-// Helper: find exclusions/completion for a trade by matching keys
+// ============================================================
+// TRADE HANDOFFS — what each trade receives and hands off
+// ============================================================
+const TRADE_HANDOFFS = {
+  'Demolition': {
+    receives: 'Access to property confirmed with Honeycomb. Protection of surfaces to remain is in place.',
+    handsOff: 'All demolished material removed. Subfloor and structure exposed and accessible. Utilities disconnected at demolished elements. Area broom clean.'
+  },
+  'Framing': {
+    receives: 'Demolition complete and approved by Honeycomb. Subfloor structure verified sound.',
+    handsOff: 'All framing complete and inspected. Blocking schedule complete. Dimensions verified against specifications. Area ready for rough mechanical trades.'
+  },
+  'Plumbing': {
+    receives: 'Framing complete. Blocking installed at all fixture locations per blocking schedule.',
+    handsOff: 'All stubs capped and labeled. Inspection passed. No penetrations left open. Work area clean.'
+  },
+  'Electrical': {
+    receives: 'Framing complete. Blocking installed at all device locations.',
+    handsOff: 'All rough-in complete. Inspection passed. Panel circuits labeled. No open penetrations in fire-rated assemblies.'
+  },
+  'HVAC': {
+    receives: 'Framing complete. Ceiling and wall cavities accessible.',
+    handsOff: 'All ductwork complete. Equipment installed. Inspection passed. All penetrations sealed.'
+  },
+  'Insulation': {
+    receives: 'All rough mechanical inspections passed. No open penetrations remaining.',
+    handsOff: 'Insulation inspection passed. No walls closed before inspection.'
+  },
+  'Drywall': {
+    receives: 'Insulation inspection passed. All blocking confirmed in place. No open penetrations.',
+    handsOff: 'All surfaces finished to specified level. Corners straight. Ready for paint. Drywall dust cleaned from all surfaces including floors, cabinets if installed, and window sills.'
+  },
+  'Waterproofing': {
+    receives: 'Shower substrate complete and dry. Framing and blocking confirmed correct for shower application.',
+    handsOff: 'Flood test passed and documented with photograph. Written sign-off from Honeycomb on file. Surface ready for tile.'
+  },
+  'Tile': {
+    receives: 'Waterproofing flood test passed and signed off by Honeycomb. Drywall complete and primed in adjacent areas. Cabinet layout approved so tile cuts at cabinets are correct.',
+    handsOff: 'All tile installed, grouted, and sealed. All installation debris removed. Floor tile protected with Ram Board or equivalent until project complete.'
+  },
+  'Cabinetry': {
+    receives: 'Flooring complete if flooring runs under cabinets, or subfloor prepared to correct height if cabinets sit on subfloor. Walls drywalled and primed. Rough plumbing and electrical confirmed correct for cabinet layout.',
+    handsOff: 'All cabinets installed, plumb, level, and functioning. Hardware installed. Countertop surface clean and ready for template. Area clean of cabinet packaging and debris.'
+  },
+  'Countertops': {
+    receives: 'Cabinets fully installed and confirmed level by Honeycomb. Sink and faucet specifications confirmed. Minimum one week after cabinet installation confirmation before template.',
+    handsOff: 'Countertop installed. Seams polished. Sink cutout confirmed. Caulk joint complete. Area clean and ready for finish plumbing.'
+  },
+  'Finish Plumbing': {
+    receives: 'Countertops installed. Sink cutout confirmed. Tile complete. Cabinet installation complete.',
+    handsOff: 'All fixtures installed and tested. No leaks. Operational confirmation documented.'
+  },
+  'Finish Electrical': {
+    receives: 'Drywall painted. Tile complete. Cabinet installation complete.',
+    handsOff: 'All fixtures and devices installed and operational. Final inspection passed.'
+  },
+  'Painting': {
+    receives: 'Drywall finish complete and ready for paint per specified level. All trim installed and nail holes filled. Tile complete. Cabinets installed and protected.',
+    handsOff: 'All surfaces painted to specified coats and sheen. All masking removed. No paint on adjacent surfaces. Floor protection reinstalled after painting if removed.'
+  },
+  'Finish Carpentry': {
+    receives: 'Painting complete or painting sequence confirmed with Honeycomb. Flooring installed.',
+    handsOff: 'All trim installed, filled, sanded. Ready for paint touch-up if needed.'
+  },
+  'Flooring': {
+    receives: 'Drywall complete. All wet trades complete. Subfloor confirmed flat to manufacturer specification.',
+    handsOff: 'Flooring installed. Transitions installed. Subfloor documentation complete if remediation was required. Floor protected with Ram Board or equivalent.'
+  },
+  'Final': {
+    receives: 'All punch list items complete and approved by Honeycomb.',
+    handsOff: 'Property in move-in ready condition.'
+  },
+  'Glass': {
+    receives: 'Tile complete and cured. Shower pan confirmed level.',
+    handsOff: 'Glass enclosure installed and functioning. Hardware operational. Silicone joints complete.'
+  },
+  'Appliances': {
+    receives: 'Cabinets and countertops installed. All utility connections accessible.',
+    handsOff: 'All appliances installed, connected, and tested. Protective film removed. Warranties provided.'
+  }
+};
+
+// Helper: find exclusions/completion/handoffs for a trade by matching keys
 function getTradeExclusions(tradeName) {
   const name = tradeName.toLowerCase();
   for (const [key, val] of Object.entries(TRADE_EXCLUSIONS)) {
@@ -1287,11 +1369,21 @@ function getTradeCompletion(tradeName) {
   return null;
 }
 
-// Generate exclusions + completion HTML for a set of trade indices
+function getTradeHandoff(tradeName) {
+  const name = tradeName.toLowerCase();
+  for (const [key, val] of Object.entries(TRADE_HANDOFFS)) {
+    if (name.includes(key.toLowerCase())) return val;
+  }
+  return null;
+}
+
+// Generate exclusions + completion + handoff HTML for a set of trade indices
 function renderTradeExclusionsAndCompletion(inst, tradeIndices) {
   let html = '';
   const allExclusions = [];
   const allCompletions = [];
+  const allReceives = [];
+  const allHandsOff = [];
 
   tradeIndices.forEach(tIdx => {
     const trade = inst.trades[tIdx];
@@ -1300,6 +1392,11 @@ function renderTradeExclusionsAndCompletion(inst, tradeIndices) {
     if (excl) excl.forEach(e => { if (!allExclusions.includes(e)) allExclusions.push(e); });
     const comp = getTradeCompletion(trade.name) || getTradeCompletion(trade.sub || '');
     if (comp && !allCompletions.includes(comp)) allCompletions.push(comp);
+    const handoff = getTradeHandoff(trade.name) || getTradeHandoff(trade.sub || '');
+    if (handoff) {
+      if (handoff.receives && !allReceives.includes(handoff.receives)) allReceives.push(handoff.receives);
+      if (handoff.handsOff && !allHandsOff.includes(handoff.handsOff)) allHandsOff.push(handoff.handsOff);
+    }
   });
 
   if (allExclusions.length > 0) {
@@ -1311,6 +1408,23 @@ function renderTradeExclusionsAndCompletion(inst, tradeIndices) {
   if (allCompletions.length > 0) {
     html += `<div class="sow-completion-block"><strong>WORK IS COMPLETE WHEN:</strong>`;
     allCompletions.forEach(c => { html += `<p>${c}</p>`; });
+    html += `</div>`;
+  }
+
+  if (allReceives.length > 0 || allHandsOff.length > 0) {
+    html += `<div class="sow-handoff-block"><strong>HANDOFF:</strong>`;
+    if (allReceives.length > 0) {
+      html += `<div class="handoff-section"><div class="handoff-label">RECEIVES FROM PREVIOUS TRADE:</div>`;
+      allReceives.forEach(r => { html += `<p>${r}</p>`; });
+      html += `<p class="handoff-note">If this condition is not met, the trade must notify Honeycomb before starting work.</p>`;
+      html += `</div>`;
+    }
+    if (allHandsOff.length > 0) {
+      html += `<div class="handoff-section"><div class="handoff-label">HANDS OFF TO NEXT TRADE:</div>`;
+      allHandsOff.forEach(h => { html += `<p>${h}</p>`; });
+      html += `<p class="handoff-note">Honeycomb inspects against these criteria before authorizing the next trade to begin.</p>`;
+      html += `</div>`;
+    }
     html += `</div>`;
   }
 
