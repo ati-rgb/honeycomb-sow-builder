@@ -367,6 +367,24 @@ header .project-badge {
   transition: transform 0.2s;
 }
 
+.trade-header .select-all-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.trade-header .select-all-btn:hover {
+  background: rgba(255,255,255,0.35);
+}
+
 .trade-header.collapsed .toggle {
   transform: rotate(-90deg);
 }
@@ -536,7 +554,7 @@ header .project-badge {
   font-size: 22px;
   border-bottom: 2px solid var(--navy);
   padding-bottom: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .sow-output .sow-meta {
@@ -548,21 +566,20 @@ header .project-badge {
 
 .sow-output h2 {
   color: var(--navy);
-  font-size: 17px;
+  font-size: 18px;
   margin-top: 24px;
   margin-bottom: 8px;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--light-blue);
+  border-bottom: 2px solid var(--navy);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .sow-output h3 {
   color: var(--blue);
-  font-size: 14px;
+  font-size: 15px;
   margin-top: 16px;
   margin-bottom: 4px;
-  text-transform: uppercase;
 }
 
 .sow-output ul {
@@ -577,6 +594,82 @@ header .project-badge {
 
 .sow-output .exclusion {
   color: #E53E3E;
+}
+
+.sow-output .sow-section-num {
+  font-weight: 600;
+}
+
+.sow-output .sow-sub {
+  margin-left: 24px;
+}
+
+.sow-output .sow-sub-item {
+  margin-left: 48px;
+  margin-bottom: 4px;
+}
+
+.sow-output .sow-notes {
+  background: #F5F7FA;
+  padding: 12px 16px;
+  border-left: 3px solid var(--gold);
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.sow-output .sow-materials {
+  margin-left: 24px;
+}
+
+.sow-output .sow-materials li {
+  font-size: 14px;
+  color: #4A5568;
+}
+
+.sow-output .narrative-section {
+  margin-bottom: 16px;
+}
+
+.sow-output .narrative-section > .section-heading {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.sow-output .narrative-items {
+  list-style-type: lower-alpha;
+  margin-left: 28px;
+  margin-bottom: 8px;
+}
+
+.sow-output .narrative-items li {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.sow-output .narrative-sub-section {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--blue);
+  margin-left: 28px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.sow-output .narrative-sub-items {
+  list-style-type: none;
+  margin-left: 48px;
+  margin-bottom: 8px;
+}
+
+.sow-output .narrative-sub-items li {
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.sow-output .narrative-sub-items li::before {
+  content: "- ";
 }
 
 /* LANDING / WELCOME */
@@ -816,903 +909,6 @@ header .project-badge {
 
 </div>
 
-<script>
-// ============================================================
-// AUTHENTICATION
-// ============================================================
-
-// SHA-256 hash of the team password "honeycomb2026"
-// To change: update this hash with the SHA-256 of your new password
-const PASSWORD_HASH = 'd04598f3f776b86fd4b2c6edb89d1ecfb12cdf345633e536f46c7125e2513b19';
-
-async function sha256(message) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Check if already authenticated
-(function checkAuth() {
-  const stored = localStorage.getItem('hc_sow_auth');
-  if (stored) {
-    try {
-      const { hash, expires } = JSON.parse(stored);
-      if (hash === PASSWORD_HASH && Date.now() < expires) {
-        document.getElementById('loginOverlay').style.display = 'none';
-        return;
-      }
-    } catch(e) {}
-    localStorage.removeItem('hc_sow_auth');
-  }
-})();
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const pw = document.getElementById('loginPassword').value;
-  const hash = await sha256(pw);
-
-  if (hash === PASSWORD_HASH) {
-    // Store auth
-    const remember = document.getElementById('loginRemember').checked;
-    const expires = Date.now() + (remember ? 30 * 24 * 60 * 60 * 1000 : 8 * 60 * 60 * 1000); // 30 days or 8 hours
-    localStorage.setItem('hc_sow_auth', JSON.stringify({ hash: PASSWORD_HASH, expires }));
-
-    // Fade out overlay
-    const overlay = document.getElementById('loginOverlay');
-    overlay.style.transition = 'opacity 0.3s ease';
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300);
-  } else {
-    document.getElementById('loginError').textContent = 'Incorrect password. Please try again.';
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('loginPassword').focus();
-  }
-  return false;
-}
-
-// ============================================================
-// DATA: All modules and their scope items
-// ============================================================
-
-const MODULES = [
-  { id: 'kitchen', name: 'Kitchen', icon: '&#x1F373;', desc: 'Full kitchen remodel', countable: false },
-  { id: 'bathroom', name: 'Bathroom', icon: '&#x1F6C1;', desc: 'Bath remodel(s)', countable: true, countLabel: 'How many?' },
-  { id: 'bedroom', name: 'Bedroom', icon: '&#x1F6CF;', desc: 'Bedroom renovation(s)', countable: true, countLabel: 'How many?' },
-  { id: 'living', name: 'Living Areas', icon: '&#x1F6CB;', desc: 'Living, dining, foyer', countable: false },
-  { id: 'laundry', name: 'Laundry', icon: '&#x1F9FA;', desc: 'Laundry room', countable: false },
-  { id: 'garage', name: 'Garage', icon: '&#x1F697;', desc: 'Garage renovation', countable: false },
-  { id: 'addition', name: 'Addition', icon: '&#x1F3D7;', desc: 'New construction / addition', countable: false },
-  { id: 'exterior', name: 'Exterior / Roofing', icon: '&#x1F3E0;', desc: 'Exterior, roof, siding', countable: false },
-  { id: 'paint', name: 'Interior Paint', icon: '&#x1F3A8;', desc: 'Whole-house interior paint', countable: false },
-  { id: 'extpaint', name: 'Exterior Paint', icon: '&#x1F58C;', desc: 'Exterior painting', countable: false },
-];
-
-const KITCHEN_TRADES = [
-  { name: 'Demolition', sub: 'Demo', items: [
-    { name: 'Remove existing cabinets', options: ['All','Upper only','Lower only','Island only'] },
-    { name: 'Save/salvage items from demo', notes: true },
-    { name: 'Remove existing countertops' },
-    { name: 'Remove existing backsplash' },
-    { name: 'Remove existing flooring', options: ['Hardwood','Tile','Vinyl/LVP','Linoleum'] },
-    { name: 'Disconnect/remove appliances', options: ['Gas disconnect req\'d','Electric only','Both gas & electric'] },
-    { name: 'Remove plumbing fixtures (sink, faucet, disposal)' },
-    { name: 'Remove existing light fixtures' },
-    { name: 'Remove/modify ceiling or soffit', options: ['Full ceiling removal','Soffit only','Partial','N/A'] },
-    { name: 'Widen or modify wall openings per plans' },
-    { name: 'Remove wall (partial or full)', options: ['Non-bearing','Load-bearing (engineer req\'d)','Partial'] },
-    { name: 'Debris removal and disposal' },
-  ]},
-  { name: 'Framing / Structural', sub: 'Framing', items: [
-    { name: 'Wall modifications per plans', options: ['Remove wall','Add wall','Partial removal','Header required'] },
-    { name: 'Structural beam/header installation per engineer' },
-    { name: 'Blocking for cabinets and heavy fixtures' },
-    { name: 'Island framing/support' },
-    { name: 'Pantry area framing' },
-    { name: 'Floor leveling / subfloor repair' },
-  ]},
-  { name: 'Plumbing', sub: 'Plumbing', items: [
-    { name: 'Sink rough-in', options: ['Same location','Relocate','Add second sink'] },
-    { name: 'Dishwasher water supply and drain' },
-    { name: 'Garbage disposal rough-in' },
-    { name: 'Gas line for range', options: ['Existing location','New run required','Relocate','N/A (electric)'] },
-    { name: 'Ice maker water line', options: ['New run','Existing','N/A'] },
-    { name: 'Pot filler rough-in', options: ['Yes','N/A'] },
-    { name: 'Water filtration system rough-in', options: ['Under-sink','N/A'] },
-    { name: 'New shut-off valves at all fixtures' },
-  ]},
-  { name: 'Electrical', sub: 'Electrical', items: [
-    { name: 'Dedicated circuit: Range/Cooktop', options: ['240V electric','Gas ignition only'] },
-    { name: 'Dedicated circuit: Refrigerator' },
-    { name: 'Dedicated circuit: Dishwasher' },
-    { name: 'Dedicated circuit: Microwave' },
-    { name: 'Dedicated circuit: Garbage disposal' },
-    { name: 'General outlet circuits (countertop GFCI)' },
-    { name: 'Under-cabinet lighting circuit' },
-    { name: 'Pendant/decorative lighting circuit' },
-    { name: 'Recessed lighting', hasQty: true },
-    { name: 'Dimmer switches', hasQty: true },
-    { name: 'Outlet relocations/additions', hasQty: true },
-    { name: 'Range hood electrical' },
-    { name: 'Island electrical (outlets in island)', options: ['Yes','N/A'] },
-  ]},
-  { name: 'HVAC', sub: 'HVAC', items: [
-    { name: 'Ductwork modification/extension' },
-    { name: 'Range hood ventilation to exterior', options: ['Roof vent','Wall vent','New duct run'] },
-    { name: 'Mini-split installation', options: ['Yes','N/A'] },
-  ]},
-  { name: 'Drywall', sub: 'Drywall', items: [
-    { name: 'New drywall installation', hasQty: true, unit: 'SF' },
-    { name: 'Drywall patch and repair', hasQty: true, unit: 'SF' },
-    { name: 'Texture finish', options: ['Smooth','Orange peel','Knockdown','Match existing'] },
-    { name: 'Prime all new/repaired drywall' },
-  ]},
-  { name: 'Cabinetry & Millwork', sub: 'Cabinets', items: [
-    { name: 'Cabinet scope', options: ['New custom','New semi-custom','Reface (new doors)','Refinish/repaint'] },
-    { name: 'Base cabinets', hasQty: true },
-    { name: 'Upper/wall cabinets', hasQty: true },
-    { name: 'Tall/pantry cabinets', hasQty: true },
-    { name: 'Island cabinets', options: ['Yes','N/A'] },
-    { name: 'Open shelving', options: ['Yes','N/A'] },
-    { name: 'Cabinet hardware', options: ['Knobs','Pulls','Combo'], hasQty: true },
-    { name: 'Specialty inserts (pullouts, dividers, lazy susan)' },
-    { name: 'Reeded glass panels', hasQty: true },
-    { name: 'Soft-close hinges and drawer slides' },
-  ]},
-  { name: 'Countertops', sub: 'Countertops', items: [
-    { name: 'Countertop material', options: ['Quartz','Granite','Marble','Butcher block','Concrete','Other'] },
-    { name: 'Fabrication and installation', hasQty: true, unit: 'SF' },
-    { name: 'Edge profile', options: ['Eased','Bullnose','Ogee','Mitered','Waterfall'] },
-    { name: 'Waterfall edge', options: ['Island','Peninsula','Both sides','N/A'] },
-    { name: 'Sink cutout' },
-    { name: 'Cooktop cutout', options: ['Yes','N/A'] },
-  ]},
-  { name: 'Backsplash', sub: 'Tile', items: [
-    { name: 'Backsplash type', options: ['Tile','Full-height slab','To ceiling','To underside of uppers','N/A'] },
-    { name: 'Backsplash material', notes: true },
-    { name: 'Pattern/layout', options: ['Straight stack','Brick/offset','Herringbone','Chevron','Custom'] },
-    { name: 'Behind range detail', options: ['Same as rest','Accent/feature','Full slab'] },
-  ]},
-  { name: 'Flooring', sub: 'Flooring', items: [
-    { name: 'Remove existing flooring' },
-    { name: 'Subfloor prep/repair/leveling' },
-    { name: 'Flooring type', options: ['Hardwood','Engineered hardwood','LVP/LVT','Porcelain tile','Natural stone'] },
-    { name: 'Installation area', hasQty: true, unit: 'SF' },
-    { name: 'Pattern/layout', options: ['Straight','Diagonal','Herringbone','Custom'] },
-    { name: 'Transitions to adjacent rooms', options: ['Flush','Reducer','T-molding','Threshold'] },
-    { name: 'Base trim / shoe molding', options: ['New','Match existing','Replace damaged'], hasQty: true, unit: 'LF' },
-  ]},
-  { name: 'Painting', sub: 'Paint', items: [
-    { name: 'Wall prep (patch, sand, prime)' },
-    { name: 'Paint walls', hasQty: true, unit: 'SF' },
-    { name: 'Paint ceiling' },
-    { name: 'Paint trim/baseboards' },
-    { name: 'Number of colors', options: ['1','2','3','4+'] },
-  ]},
-  { name: 'Plumbing Fixtures (Finish)', sub: 'Plumbing', items: [
-    { name: 'Sink type', options: ['Farmhouse/apron','Undermount','Drop-in','Double bowl'] },
-    { name: 'Faucet type', options: ['Pull-down','Pull-out','Standard','Bridge','Wall mount'] },
-    { name: 'Faucet finish', options: ['Chrome','Brushed nickel','Matte black','Brushed gold','Oil rubbed bronze'] },
-    { name: 'Garbage disposal', options: ['Standard','Premium/quiet'] },
-    { name: 'Air switch for disposal' },
-    { name: 'Soap dispenser', options: ['Countertop mount','N/A'] },
-  ]},
-  { name: 'Electrical Fixtures (Finish)', sub: 'Electrical', items: [
-    { name: 'Recessed lights (install)', hasQty: true },
-    { name: 'Pendant lights (install)', hasQty: true },
-    { name: 'Under-cabinet lights', options: ['LED strip','Puck lights','Light bar'] },
-    { name: 'Switch plates / outlet covers', options: ['Standard','Decora','Specialty finish'] },
-  ]},
-  { name: 'Appliances', sub: 'Appliances', items: [
-    { name: 'Refrigerator', options: ['Standard','Counter-depth','Panel-ready','Built-in'] },
-    { name: 'Range / Cooktop', options: ['Gas range','Electric range','Induction','Gas cooktop'] },
-    { name: 'Range size', options: ['30"','36"','48"'] },
-    { name: 'Range hood', options: ['Wall mount','Island','Under-cabinet','Insert/liner','Downdraft'] },
-    { name: 'Dishwasher', options: ['Standard','Panel-ready','Drawer'] },
-    { name: 'Microwave', options: ['Built-in','Drawer','Over-the-range','N/A'] },
-    { name: 'Garbage disposal (install)' },
-    { name: 'All installation, connections, testing' },
-  ]},
-  { name: 'Doors & Windows', sub: 'Doors/Windows', items: [
-    { name: 'Interior door(s)', options: ['Standard swing','Pocket','Barn door','Bifold','N/A'] },
-    { name: 'Door hardware', options: ['New','Reuse existing','Match existing'] },
-    { name: 'Window replacement', options: ['Yes - all','Yes - select','No'] },
-  ]},
-  { name: 'Final', sub: 'GC', items: [
-    { name: 'Final cleanup' },
-    { name: 'Appliance testing' },
-    { name: 'Punch list' },
-    { name: 'Building department inspection' },
-    { name: 'Client walkthrough' },
-  ]},
-];
-
-const BATHROOM_TRADES = [
-  { name: 'Demolition', sub: 'Demo', items: [
-    { name: 'Remove vanity/cabinet' },
-    { name: 'Remove toilet' },
-    { name: 'Remove shower', options: ['Shower only','Tub/shower combo','Walk-in'] },
-    { name: 'Remove bathtub', options: ['Alcove','Freestanding','Drop-in','N/A'] },
-    { name: 'Remove flooring', options: ['Tile','Vinyl','Other'] },
-    { name: 'Remove wall tile', options: ['Full walls','Shower area only','N/A'] },
-    { name: 'Remove mirrors/accessories/light fixtures' },
-    { name: 'Remove existing door', options: ['Standard','Pocket','N/A'] },
-    { name: 'Debris removal and disposal' },
-  ]},
-  { name: 'Framing / Structural', sub: 'Framing', items: [
-    { name: 'Shower enclosure framing' },
-    { name: 'Tub support/platform framing', options: ['Freestanding','Drop-in deck','N/A'] },
-    { name: 'Blocking for grab bars' },
-    { name: 'Blocking for wall-mounted fixtures', options: ['Wall-mount toilet','Wall-mount vanity','Both','N/A'] },
-    { name: 'New door opening', options: ['Standard','Pocket door','Barn door','Widen for ADA','N/A'] },
-    { name: 'Shower bench framing', options: ['Built-in floating','Corner','N/A'] },
-    { name: 'Niche framing', hasQty: true },
-    { name: 'Wall modifications per plans' },
-  ]},
-  { name: 'Plumbing', sub: 'Plumbing', items: [
-    { name: 'Shower type', options: ['Curbless','Curbed','Step-down conversion','Tub/shower combo','N/A'] },
-    { name: 'Shower drain type', options: ['Linear drain','Center drain','Trench drain','Standard'] },
-    { name: 'Shower valve type', options: ['Pressure balance','Thermostatic','Digital'] },
-    { name: 'Shower configuration', options: ['Single head','Rain + handheld','Multi-head/body jets','Steam'] },
-    { name: 'Bathtub rough-in', options: ['Freestanding','Drop-in','Alcove','Walk-in (ADA)','N/A'] },
-    { name: 'Tub filler type', options: ['Freestanding floor mount','Wall mount','Deck mount','N/A'] },
-    { name: 'Vanity sink count', options: ['Single sink','Double sink'] },
-    { name: 'Vanity mounting', options: ['Floor standing','Wall mounted (blocking req\'d)'] },
-    { name: 'Toilet rough-in', options: ['Standard floor mount','Wall mounted (carrier req\'d)'] },
-    { name: 'Bidet rough-in', options: ['Bidet seat (electrical req\'d)','Standalone','N/A'] },
-    { name: 'Relocate plumbing lines', notes: true },
-    { name: 'New shut-off valves at all fixtures' },
-  ]},
-  { name: 'Electrical', sub: 'Electrical', items: [
-    { name: 'Vanity lighting circuit' },
-    { name: 'Overhead lighting circuit' },
-    { name: 'Exhaust fan circuit' },
-    { name: 'GFCI outlets' },
-    { name: 'Heated floor circuit', options: ['Electric mat','N/A'] },
-    { name: 'Towel warmer circuit', options: ['Hardwired','Plug-in','N/A'] },
-    { name: 'Bidet seat outlet', options: ['Yes','N/A'] },
-    { name: 'Dimmer switches', hasQty: true },
-  ]},
-  { name: 'Waterproofing', sub: 'Tile', items: [
-    { name: 'Shower pan method', options: ['Hot mop','Sheet membrane (Kerdi)','Liquid (RedGard)','Pre-formed pan','Mud bed'] },
-    { name: 'Shower wall waterproofing', options: ['Kerdi board','RedGard over CBU','Wedi board'] },
-    { name: 'Curb type', options: ['Standard curb','Low-profile','N/A (curbless)'] },
-    { name: 'Curbless transition detail', options: ['Linear drain at entry','Sloped floor','N/A (curbed)'] },
-    { name: 'Shower bench waterproofing', options: ['Yes','N/A'] },
-    { name: 'Niche waterproofing' },
-    { name: 'Flood test / inspection' },
-  ]},
-  { name: 'Tile', sub: 'Tile', items: [
-    { name: 'Floor tile', hasQty: true, unit: 'SF', notes: true },
-    { name: 'Shower floor tile', options: ['Same as floor','Mosaic','Pebble','Different material'] },
-    { name: 'Shower wall tile height', options: ['To 48"','To 60"','To ceiling','Full surround'] },
-    { name: 'Shower niche(s)', hasQty: true },
-    { name: 'Accent tile / feature wall', notes: true },
-    { name: 'Tub surround tile', options: ['To 48"','To ceiling','N/A'] },
-    { name: 'Wainscoting', options: ['Subway','Zellige','Large format','Custom','N/A'], hasQty: true, unit: 'LF' },
-    { name: 'Tile layout/pattern', options: ['Straight','Brick/offset','Herringbone','Chevron','Custom'] },
-    { name: 'Schluter/edge trim profiles' },
-    { name: 'Grouting and sealing' },
-  ]},
-  { name: 'Cabinetry', sub: 'Cabinets', items: [
-    { name: 'Vanity type', options: ['Prefab','Semi-custom','Custom built','Floating','Furniture piece'] },
-    { name: 'Vanity size', options: ['24"','30"','36"','48"','60"','72"','92"+','Custom'] },
-    { name: 'Linen cabinet/tower', options: ['Built-in','Freestanding','Recessed','N/A'] },
-    { name: 'Medicine cabinet', options: ['Surface mount','Recessed','Lighted','N/A'], hasQty: true },
-    { name: 'Storage cabinet', options: ['Yes - custom','Yes - prefab','N/A'] },
-    { name: 'Cabinet hardware' },
-  ]},
-  { name: 'Countertops', sub: 'Countertops', items: [
-    { name: 'Countertop material', options: ['Quartz','Marble','Granite','Solid surface','Concrete'] },
-    { name: 'Fabrication and installation', hasQty: true, unit: 'SF' },
-    { name: 'Sink cutout type', options: ['Undermount','Vessel','Integrated','Drop-in'] },
-    { name: 'Edge profile', options: ['Eased','Bullnose','Ogee','Beveled'] },
-  ]},
-  { name: 'Glass / Shower Enclosure', sub: 'Glass', items: [
-    { name: 'Enclosure type', options: ['Frameless','Semi-frameless','Framed','Panel only','N/A'] },
-    { name: 'Door type', options: ['Swing door','Sliding','Bypass','Fixed panel'] },
-    { name: 'Glass type', options: ['Clear','Low-iron','Frosted','Rain texture'] },
-    { name: 'Hardware finish', options: ['Chrome','Brushed nickel','Matte black','Brushed gold','Oil rubbed bronze'] },
-  ]},
-  { name: 'Plumbing Fixtures (Finish)', sub: 'Plumbing', items: [
-    { name: 'Toilet', options: ['Standard 2-piece','1-piece','Wall-hung','Smart toilet','Comfort height'] },
-    { name: 'Bidet / bidet seat', options: ['Bidet seat (Washlet)','Standalone','N/A'] },
-    { name: 'Sink type', options: ['Undermount','Vessel','Drop-in','Pedestal','Wall-mount'] },
-    { name: 'Faucet type', options: ['Single hole','Widespread','Wall mount','Vessel faucet'] },
-    { name: 'Faucet finish', options: ['Chrome','Brushed nickel','Matte black','Brushed gold','Aged brass'] },
-    { name: 'Shower system', notes: true },
-    { name: 'Bathtub', options: ['Freestanding','Drop-in','Alcove','Walk-in (ADA)','N/A'] },
-    { name: 'Tub filler', options: ['Freestanding floor mount','Wall mount','Deck mount','N/A'] },
-    { name: 'Towel bars/rings', hasQty: true },
-    { name: 'Toilet paper holder' },
-    { name: 'Robe hooks', hasQty: true },
-    { name: 'Accessory finish', options: ['Chrome','Brushed nickel','Matte black','Brushed gold','Match faucet'] },
-  ]},
-  { name: 'Electrical Fixtures (Finish)', sub: 'Electrical', items: [
-    { name: 'Vanity sconces/lights', hasQty: true },
-    { name: 'Overhead light fixture' },
-    { name: 'Exhaust fan', options: ['Standard','With light','Humidity sensing','Heater combo'] },
-    { name: 'Towel warmer', options: ['Hardwired','Plug-in','N/A'] },
-  ]},
-  { name: 'Flooring', sub: 'Flooring', items: [
-    { name: 'Remove existing flooring' },
-    { name: 'Subfloor prep/repair' },
-    { name: 'Heated floor system', options: ['Electric mat','N/A'] },
-    { name: 'Flooring type', options: ['Porcelain tile','Ceramic tile','Natural stone','Marble','LVP'] },
-    { name: 'Installation area', hasQty: true, unit: 'SF' },
-    { name: 'Base trim', options: ['Tile base','Wood baseboard','N/A'], hasQty: true, unit: 'LF' },
-    { name: 'Threshold/transition', options: ['Marble saddle','Schluter','Wood','Flush'] },
-  ]},
-  { name: 'Painting', sub: 'Paint', items: [
-    { name: 'Wall prep and paint' },
-    { name: 'Paint ceiling', options: ['Standard','Moisture-resistant'] },
-    { name: 'Paint trim/door' },
-  ]},
-  { name: 'Trim & Finish', sub: 'Finish Carpentry', items: [
-    { name: 'Door', options: ['New standard','New pocket','New barn door','Keep existing','Widen for ADA'] },
-    { name: 'Door hardware', options: ['Privacy lock','ADA lever','Match existing'] },
-    { name: 'Baseboards', options: ['New (5")','Match existing','N/A (tile base)'] },
-    { name: 'Closet doors', options: ['New','Keep existing','N/A'] },
-  ]},
-  { name: 'Final', sub: 'GC', items: [
-    { name: 'Final cleanup' },
-    { name: 'Fixture testing (water, drain, electrical)' },
-    { name: 'Caulking and sealant' },
-    { name: 'Punch list' },
-    { name: 'Client walkthrough' },
-  ]},
-];
-
-const GENERAL_CONDITIONS = [
-  { name: 'Pre-Construction', items: [
-    'Portable toilet installation and weekly servicing',
-    'Dumpster rental and waste removal',
-    'Floor protection (Ram Board)',
-    'Dust barriers / plastic sheeting',
-    'Temporary zip walls and doors',
-    'Material staging area setup',
-    'Lockbox / site access coordination',
-    'Neighbor notification',
-  ]},
-  { name: 'Permits & Inspections', items: [
-    'Building permit',
-    'Plumbing permit',
-    'Electrical permit',
-    'Mechanical permit',
-    'Plan check fees',
-    'Inspection scheduling (all phases)',
-  ]},
-  { name: 'Project Management', items: [
-    'Project coordination and supervision',
-    'Subcontractor scheduling and oversight',
-    'Daily site visits and quality control',
-    'Client communication and updates',
-    'Change order management',
-  ]},
-  { name: 'Post-Construction', items: [
-    'Final interior cleaning',
-    'Window cleaning',
-    'Debris removal',
-    'Appliance cleaning',
-    'Final punch list coordination',
-    'Client walkthrough',
-    'Warranty information handover',
-  ]},
-];
-
-const STANDARD_EXCLUSIONS = [
-  'Structural engineering fees',
-  'Architectural / design fees',
-  'Furniture, window treatments, or decor',
-  'Landscaping or exterior work (unless in scope)',
-  'Unforeseen conditions beyond contingency',
-  'Changes or upgrades beyond specified scope',
-  'Utility company fees or service upgrades',
-  'HOA fees or approval process',
-  'Temporary housing for owner',
-  'Storage / moving of owner\'s belongings',
-  'Pest control treatment (unless in scope)',
-];
-
-// ============================================================
-// STATE
-// ============================================================
-let selectedModules = {};
-let moduleInstances = []; // { id, name, label, trades }
-let scopeData = {}; // moduleKey -> { tradeIdx -> { itemIdx -> { included, detail, notes, qty } } }
-let conditionsData = {};
-let exclusionsData = {};
-let currentStep = 0;
-
-// ============================================================
-// MODULE SELECTOR
-// ============================================================
-function renderModuleGrid() {
-  const grid = document.getElementById('moduleGrid');
-  grid.innerHTML = MODULES.map(m => `
-    <div class="module-card" id="mod-${m.id}" onclick="toggleModule('${m.id}')">
-      <div class="icon">${m.icon}</div>
-      <div>
-        <h3>${m.name}</h3>
-        <p>${m.desc}</p>
-      </div>
-      ${m.countable ? `<input type="number" class="count-input" id="count-${m.id}" min="1" max="10" value="1" onclick="event.stopPropagation()" onchange="event.stopPropagation()">` : ''}
-    </div>
-  `).join('');
-}
-
-function toggleModule(id) {
-  const card = document.getElementById(`mod-${id}`);
-  if (selectedModules[id]) {
-    delete selectedModules[id];
-    card.classList.remove('selected');
-  } else {
-    selectedModules[id] = true;
-    card.classList.add('selected');
-  }
-}
-
-// ============================================================
-// BUILD MODULE STEPS
-// ============================================================
-function buildModuleSteps() {
-  moduleInstances = [];
-  const container = document.getElementById('dynamicSteps');
-  container.innerHTML = '';
-
-  // Update project badge
-  const name = document.getElementById('projectName').value || 'New Project';
-  document.getElementById('projectBadge').textContent = name;
-
-  Object.keys(selectedModules).forEach(modId => {
-    const modDef = MODULES.find(m => m.id === modId);
-    if (!modDef) return;
-
-    if (modDef.countable) {
-      const count = parseInt(document.getElementById(`count-${modId}`)?.value || 1);
-      for (let i = 1; i <= count; i++) {
-        const key = `${modId}-${i}`;
-        const label = `${modDef.name} ${i}`;
-        moduleInstances.push({ id: modId, key, label, trades: getTradesForModule(modId) });
-      }
-    } else {
-      const key = modId;
-      moduleInstances.push({ id: modId, key, label: modDef.name, trades: getTradesForModule(modId) });
-    }
-  });
-
-  // Build each module step
-  moduleInstances.forEach((inst, idx) => {
-    const stepDiv = document.createElement('div');
-    stepDiv.className = 'step';
-    stepDiv.id = `step-mod-${idx}`;
-
-    // Bathroom name input
-    let nameInput = '';
-    if (inst.id === 'bathroom') {
-      nameInput = `
-        <div class="card" style="margin-bottom: 12px;">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Bathroom Name / Location</label>
-              <input type="text" id="bathname-${inst.key}" placeholder="e.g., Primary Bath, Pool Bath, Girl's Bath">
-            </div>
-            <div class="form-group">
-              <label>Type</label>
-              <select id="bathtype-${inst.key}">
-                <option>Master Bath</option><option>Guest Bath</option><option>Powder Room</option>
-                <option>Jack & Jill</option><option>Hall Bath</option><option>Pool Bath</option>
-                <option>ADA/Accessible</option><option>Other</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    stepDiv.innerHTML = `
-      ${nameInput}
-      <div class="card">
-        <h2>${inst.label}</h2>
-        <div class="subtitle">Check items to include, then fill in details</div>
-        ${renderTrades(inst.trades, inst.key)}
-      </div>
-      <div class="btn-nav">
-        <button class="btn btn-outline" onclick="goToModuleStep(${idx - 1})">&#x2190; Back</button>
-        <button class="btn btn-primary" onclick="goToModuleStep(${idx + 1})">Next &#x2192;</button>
-      </div>
-    `;
-    container.appendChild(stepDiv);
-  });
-
-  // Build general conditions
-  buildConditions();
-  buildExclusions();
-
-  // Rebuild nav
-  rebuildNav();
-
-  // Go to first module
-  if (moduleInstances.length > 0) {
-    goToModuleStep(0);
-  }
-}
-
-function getTradesForModule(modId) {
-  switch (modId) {
-    case 'kitchen': return KITCHEN_TRADES;
-    case 'bathroom': return BATHROOM_TRADES;
-    case 'paint': return [{ name: 'Interior Painting', sub: 'Paint', items: [
-      { name: 'Wall prep throughout (patch, sand, prime)', hasQty: true, unit: 'SF' },
-      { name: 'Paint all walls' },
-      { name: 'Paint all ceilings' },
-      { name: 'Paint all trim/baseboards/casing' },
-      { name: 'Paint all interior doors' },
-      { name: 'Number of colors', options: ['1-2','3-4','5+'] },
-      { name: 'Touch-up/repair drywall before paint' },
-    ]}];
-    case 'extpaint': return [{ name: 'Exterior Painting', sub: 'Paint', items: [
-      { name: 'Pressure wash exterior', hasQty: true, unit: 'SF' },
-      { name: 'Scrape and prep' },
-      { name: 'Prime and paint walls' },
-      { name: 'Paint trim/fascia/soffits' },
-      { name: 'Paint exterior doors' },
-      { name: 'Paint shutters/accents' },
-      { name: 'Paint garage door', options: ['Yes','N/A'] },
-    ]}];
-    default:
-      return [{ name: `${MODULES.find(m=>m.id===modId)?.name || modId} Scope`, sub: 'GC', items: [
-        { name: 'Scope items to be detailed', notes: true },
-      ]}];
-  }
-}
-
-function renderTrades(trades, moduleKey) {
-  return trades.map((trade, tIdx) => `
-    <div class="trade-section">
-      <div class="trade-header" onclick="toggleTrade(this)">
-        ${trade.name} <span class="toggle">&#x25BC;</span>
-      </div>
-      <div class="trade-body">
-        ${trade.items.map((item, iIdx) => renderScopeItem(item, moduleKey, tIdx, iIdx, trade.sub)).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderScopeItem(item, moduleKey, tIdx, iIdx, sub) {
-  const id = `${moduleKey}-${tIdx}-${iIdx}`;
-  return `
-    <div class="scope-item" id="si-${id}" onclick="toggleItem('${id}', '${moduleKey}', ${tIdx}, ${iIdx})">
-      <div class="toggle-include" id="ti-${id}"></div>
-      <div class="item-content">
-        <div class="item-name">${item.name}</div>
-        <div class="item-details" onclick="event.stopPropagation()">
-          ${item.options ? `
-            <div>
-              <div class="detail-label">Specification</div>
-              <select id="det-${id}" onchange="updateItemData('${moduleKey}',${tIdx},${iIdx},'detail',this.value)">
-                <option value="">Select...</option>
-                ${item.options.map(o => `<option value="${o}">${o}</option>`).join('')}
-              </select>
-            </div>
-          ` : ''}
-          ${item.hasQty ? `
-            <div>
-              <div class="detail-label">Quantity${item.unit ? ` (${item.unit})` : ''}</div>
-              <input type="text" id="qty-${id}" placeholder="Qty" onchange="updateItemData('${moduleKey}',${tIdx},${iIdx},'qty',this.value)">
-            </div>
-          ` : ''}
-          <textarea id="notes-${id}" placeholder="Notes / field observations..." onchange="updateItemData('${moduleKey}',${tIdx},${iIdx},'notes',this.value)"></textarea>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function toggleItem(id, moduleKey, tIdx, iIdx) {
-  const el = document.getElementById(`si-${id}`);
-  const isIncluded = el.classList.toggle('included');
-  const ti = document.getElementById(`ti-${id}`);
-  ti.innerHTML = isIncluded ? '&#x2713;' : '';
-
-  if (!scopeData[moduleKey]) scopeData[moduleKey] = {};
-  if (!scopeData[moduleKey][tIdx]) scopeData[moduleKey][tIdx] = {};
-  if (!scopeData[moduleKey][tIdx][iIdx]) scopeData[moduleKey][tIdx][iIdx] = {};
-  scopeData[moduleKey][tIdx][iIdx].included = isIncluded;
-}
-
-function updateItemData(moduleKey, tIdx, iIdx, field, value) {
-  if (!scopeData[moduleKey]) scopeData[moduleKey] = {};
-  if (!scopeData[moduleKey][tIdx]) scopeData[moduleKey][tIdx] = {};
-  if (!scopeData[moduleKey][tIdx][iIdx]) scopeData[moduleKey][tIdx][iIdx] = {};
-  scopeData[moduleKey][tIdx][iIdx][field] = value;
-}
-
-function toggleTrade(header) {
-  header.classList.toggle('collapsed');
-  header.nextElementSibling.classList.toggle('collapsed');
-}
-
-// ============================================================
-// GENERAL CONDITIONS & EXCLUSIONS
-// ============================================================
-function buildConditions() {
-  const el = document.getElementById('conditionsContent');
-  el.innerHTML = GENERAL_CONDITIONS.map((sec, sIdx) => `
-    <div class="trade-section">
-      <div class="trade-header" onclick="toggleTrade(this)">
-        ${sec.name} <span class="toggle">&#x25BC;</span>
-      </div>
-      <div class="trade-body">
-        ${sec.items.map((item, iIdx) => `
-          <div class="scope-item" id="gc-${sIdx}-${iIdx}" onclick="toggleGC(${sIdx},${iIdx})">
-            <div class="toggle-include" id="gci-${sIdx}-${iIdx}"></div>
-            <div class="item-content"><div class="item-name">${item}</div></div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function toggleGC(sIdx, iIdx) {
-  const el = document.getElementById(`gc-${sIdx}-${iIdx}`);
-  const isOn = el.classList.toggle('included');
-  document.getElementById(`gci-${sIdx}-${iIdx}`).innerHTML = isOn ? '&#x2713;' : '';
-  if (!conditionsData[sIdx]) conditionsData[sIdx] = {};
-  conditionsData[sIdx][iIdx] = isOn;
-}
-
-function buildExclusions() {
-  const el = document.getElementById('exclusionsContent');
-  el.innerHTML = STANDARD_EXCLUSIONS.map((exc, i) => `
-    <div class="scope-item" id="ex-${i}" onclick="toggleExclusion(${i})">
-      <div class="toggle-include" id="exi-${i}"></div>
-      <div class="item-content"><div class="item-name">${exc}</div></div>
-    </div>
-  `).join('') + `
-    <div style="margin-top: 12px;">
-      <div class="detail-label">Additional Exclusions</div>
-      <textarea id="customExclusions" rows="3" placeholder="Add any project-specific exclusions..." style="width:100%; padding:8px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit;"></textarea>
-    </div>
-  `;
-}
-
-function toggleExclusion(i) {
-  const el = document.getElementById(`ex-${i}`);
-  const isOn = el.classList.toggle('included');
-  document.getElementById(`exi-${i}`).innerHTML = isOn ? '&#x2713;' : '';
-  exclusionsData[i] = isOn;
-}
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-function rebuildNav() {
-  const nav = document.getElementById('stepNav');
-  let btns = `
-    <button onclick="goToStep(0)">Project Setup</button>
-    <button onclick="goToStep(1)">Modules</button>
-  `;
-  moduleInstances.forEach((inst, i) => {
-    btns += `<button onclick="goToModuleStep(${i})">${inst.label}</button>`;
-  });
-  btns += `
-    <button onclick="goToStep('conditions')">General Conditions</button>
-    <button onclick="goToStep('review')">Review & Generate</button>
-  `;
-  nav.innerHTML = btns;
-}
-
-function goToStep(step) {
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.step-nav button').forEach(b => b.classList.remove('active'));
-
-  if (step === 'conditions') {
-    document.getElementById('step-conditions').classList.add('active');
-  } else if (step === 'review') {
-    document.getElementById('step-review').classList.add('active');
-    buildReviewSummary();
-  } else {
-    document.getElementById(`step-${step}`).classList.add('active');
-  }
-
-  window.scrollTo(0, 0);
-  updateProgress();
-}
-
-function goToModuleStep(idx) {
-  if (idx < 0) { goToStep(1); return; }
-  if (idx >= moduleInstances.length) { goToStep('conditions'); return; }
-
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  document.getElementById(`step-mod-${idx}`).classList.add('active');
-  window.scrollTo(0, 0);
-  updateProgress();
-}
-
-function goToPrevModule() {
-  if (moduleInstances.length > 0) {
-    goToModuleStep(moduleInstances.length - 1);
-  } else {
-    goToStep(1);
-  }
-}
-
-function updateProgress() {
-  const total = 2 + moduleInstances.length + 2; // setup, modules, each module, conditions, review
-  const activeStep = document.querySelector('.step.active');
-  let current = 1;
-  if (activeStep) {
-    const id = activeStep.id;
-    if (id === 'step-0') current = 1;
-    else if (id === 'step-1') current = 2;
-    else if (id.startsWith('step-mod-')) current = 3 + parseInt(id.split('-')[2]);
-    else if (id === 'step-conditions') current = total - 1;
-    else if (id === 'step-review') current = total;
-  }
-  document.getElementById('progressFill').style.width = `${(current / total) * 100}%`;
-}
-
-// ============================================================
-// REVIEW & SOW GENERATION
-// ============================================================
-function buildReviewSummary() {
-  const el = document.getElementById('reviewSummary');
-  const projectName = document.getElementById('projectName').value || 'Untitled';
-  const address = document.getElementById('propertyAddress').value || '';
-  const client = document.getElementById('clientName').value || '';
-
-  let html = `<div style="margin-bottom: 16px;">
-    <strong>${projectName}</strong> | ${address}<br>
-    <span style="color: var(--muted);">Client: ${client}</span>
-  </div>`;
-
-  html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">';
-  moduleInstances.forEach(inst => {
-    let itemCount = 0;
-    const data = scopeData[inst.key] || {};
-    Object.values(data).forEach(trade => {
-      Object.values(trade).forEach(item => {
-        if (item.included) itemCount++;
-      });
-    });
-    html += `<div style="padding: 12px; background: ${itemCount > 0 ? '#F0FFF4' : '#FFF5F5'}; border-radius: 8px;">
-      <strong>${inst.label}</strong><br>
-      <span style="color: var(--muted); font-size: 13px;">${itemCount} scope items selected</span>
-    </div>`;
-  });
-  html += '</div>';
-
-  el.innerHTML = html;
-}
-
-function generateSOW() {
-  const projectName = document.getElementById('projectName').value || 'Untitled Project';
-  const address = document.getElementById('propertyAddress').value || '';
-  const client = document.getElementById('clientName').value || '';
-  const propType = document.getElementById('propertyType').value || '';
-  const projType = document.getElementById('projectType').value || '';
-  const sf = document.getElementById('totalSF').value || '';
-  const yearBuilt = document.getElementById('yearBuilt').value || '';
-  const bedsBaths = document.getElementById('bedsBaths').value || '';
-  const designFirm = document.getElementById('designFirm').value || '';
-  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  let sow = `<h1>HONEYCOMB DESIGN AND REMODELING<br>SCOPE OF WORK</h1>`;
-  sow += `<div class="sow-meta">
-    <strong>PROJECT:</strong> ${address}<br>
-    <strong>CLIENT:</strong> ${client}<br>
-    ${propType ? `${propType} | ` : ''}${sf ? `${sf} SF | ` : ''}${bedsBaths ? `${bedsBaths} | ` : ''}${yearBuilt ? `Year Built: ${yearBuilt}` : ''}<br>
-    ${projType ? `<strong>Scope:</strong> ${projType}<br>` : ''}
-    <strong>Date:</strong> ${today}<br>
-    ${designFirm ? `<strong>Design:</strong> ${designFirm}` : ''}
-  </div>`;
-
-  // Each module
-  moduleInstances.forEach(inst => {
-    const data = scopeData[inst.key] || {};
-    let hasItems = false;
-    Object.values(data).forEach(trade => {
-      Object.values(trade).forEach(item => { if (item.included) hasItems = true; });
-    });
-    if (!hasItems) return;
-
-    // Get bath name if applicable
-    let moduleTitle = inst.label;
-    if (inst.id === 'bathroom') {
-      const bathName = document.getElementById(`bathname-${inst.key}`)?.value;
-      if (bathName) moduleTitle = bathName;
-    }
-
-    sow += `<h2>${moduleTitle.toUpperCase()}</h2>`;
-
-    inst.trades.forEach((trade, tIdx) => {
-      const tradeData = data[tIdx] || {};
-      const includedItems = Object.entries(tradeData).filter(([_, v]) => v.included);
-      if (includedItems.length === 0) return;
-
-      sow += `<h3>${trade.name}</h3><ul>`;
-      includedItems.forEach(([iIdx, itemData]) => {
-        const itemDef = trade.items[parseInt(iIdx)];
-        if (!itemDef) return;
-
-        let line = itemDef.name;
-        if (itemData.detail) line += ` - ${itemData.detail}`;
-        if (itemData.qty) line += ` (${itemData.qty}${itemDef.unit ? ' ' + itemDef.unit : ''})`;
-        if (itemData.notes) line += ` [${itemData.notes}]`;
-        sow += `<li>${line}</li>`;
-      });
-      sow += '</ul>';
-    });
-  });
-
-  // General Conditions
-  let hasConditions = false;
-  GENERAL_CONDITIONS.forEach((sec, sIdx) => {
-    const secData = conditionsData[sIdx] || {};
-    if (Object.values(secData).some(v => v)) hasConditions = true;
-  });
-
-  if (hasConditions) {
-    sow += '<h2>GENERAL CONDITIONS</h2>';
-    GENERAL_CONDITIONS.forEach((sec, sIdx) => {
-      const secData = conditionsData[sIdx] || {};
-      const included = Object.entries(secData).filter(([_, v]) => v);
-      if (included.length === 0) return;
-      sow += `<h3>${sec.name}</h3><ul>`;
-      included.forEach(([iIdx]) => {
-        sow += `<li>${sec.items[parseInt(iIdx)]}</li>`;
-      });
-      sow += '</ul>';
-    });
-  }
-
-  // Exclusions
-  const includedExclusions = Object.entries(exclusionsData).filter(([_, v]) => v);
-  const customExcl = document.getElementById('customExclusions')?.value;
-  if (includedExclusions.length > 0 || customExcl) {
-    sow += '<h2>EXCLUSIONS</h2><ul>';
-    includedExclusions.forEach(([i]) => {
-      sow += `<li class="exclusion">${STANDARD_EXCLUSIONS[parseInt(i)]}</li>`;
-    });
-    if (customExcl) {
-      customExcl.split('\n').filter(l => l.trim()).forEach(l => {
-        sow += `<li class="exclusion">${l.trim()}</li>`;
-      });
-    }
-    sow += '</ul>';
-  }
-
-  // Notes
-  const notes = document.getElementById('projectNotes')?.value;
-  if (notes) {
-    sow += `<h2>NOTES</h2><p>${notes}</p>`;
-  }
-
-  document.getElementById('sowOutput').innerHTML = sow;
-  document.getElementById('sowOutputContainer').style.display = 'block';
-  document.getElementById('sowOutputContainer').scrollIntoView({ behavior: 'smooth' });
-}
-
-function copySOW() {
-  const el = document.getElementById('sowOutput');
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  document.execCommand('copy');
-  sel.removeAllRanges();
-  alert('SOW copied to clipboard! You can paste it into a Word document or share it directly.');
-}
-
-// ============================================================
-// INIT
-// ============================================================
-renderModuleGrid();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
