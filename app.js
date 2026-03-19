@@ -243,15 +243,15 @@ const KITCHEN_TRADES = [
   ]},
   { name: 'Backsplash', sub: 'Tile', items: [
     { name: 'Backsplash type', options: ['Tile','Full-height slab','To ceiling','To underside of uppers','N/A'] },
-    { name: 'Backsplash material', notes: true },
+    { name: 'Backsplash material', options: ['Porcelain','Ceramic','Zellige','Marble','Glass','Cement tile','Natural stone','Other'], notes: true },
     { name: 'Pattern/layout', options: ['Straight stack','Brick/offset','Herringbone','Chevron','Custom'] },
     { name: 'Behind range detail', options: ['Same as rest','Accent/feature','Full slab'] },
   ]},
   { name: 'Flooring', sub: 'Flooring', items: [
     { name: 'Remove existing flooring' },
     { name: 'Subfloor prep/repair/leveling' },
-    { name: 'Flooring type', options: ['Hardwood','Engineered hardwood','LVP/LVT','Porcelain tile','Natural stone'] },
-    { name: 'Installation area', hasQty: true, unit: 'SF' },
+    { name: 'Flooring type', options: ['Hardwood','Engineered hardwood','LVP/LVT','Porcelain tile','Ceramic tile','Natural stone','Marble','Other'] },
+    { name: 'Square footage', hasQty: true, unit: 'SF' },
     { name: 'Pattern/layout', options: ['Straight','Diagonal','Herringbone','Custom'] },
     { name: 'Transitions to adjacent rooms', options: ['Flush','Reducer','T-molding','Threshold'] },
     { name: 'Base trim / shoe molding', options: ['New','Match existing','Replace damaged'], hasQty: true, unit: 'LF' },
@@ -357,13 +357,14 @@ const BATHROOM_TRADES = [
     { name: 'Flood test / inspection' },
   ]},
   { name: 'Tile', sub: 'Tile', items: [
+    { name: 'Tile material', options: ['Porcelain','Ceramic','Marble','Natural stone','Zellige','Glass','Mosaic','Cement','Other'] },
     { name: 'Floor tile', hasQty: true, unit: 'SF', notes: true },
-    { name: 'Shower floor tile', options: ['Same as floor','Mosaic','Pebble','Different material'] },
+    { name: 'Shower floor tile', options: ['Same as floor','Porcelain mosaic','Marble mosaic','Pebble','Cement tile','Other'] },
     { name: 'Shower wall tile height', options: ['To 48"','To 60"','To ceiling','Full surround'] },
     { name: 'Shower niche(s)', hasQty: true },
     { name: 'Accent tile / feature wall', notes: true },
     { name: 'Tub surround tile', options: ['To 48"','To ceiling','N/A'] },
-    { name: 'Wainscoting', options: ['Subway','Zellige','Large format','Custom','N/A'], hasQty: true, unit: 'LF' },
+    { name: 'Wainscoting / wall tile type', options: ['Subway','Zellige','Large format porcelain','Large format marble','Ceramic','Custom pattern','N/A'], hasQty: true, unit: 'LF' },
     { name: 'Tile layout/pattern', options: ['Straight','Brick/offset','Herringbone','Chevron','Custom'] },
     { name: 'Schluter/edge trim profiles' },
     { name: 'Grouting and sealing' },
@@ -377,7 +378,7 @@ const BATHROOM_TRADES = [
     { name: 'Cabinet hardware' },
   ]},
   { name: 'Countertops', sub: 'Countertops', items: [
-    { name: 'Countertop material', options: ['Quartz','Marble','Granite','Solid surface','Concrete'] },
+    { name: 'Countertop material', options: ['Quartz','Marble','Granite','Solid surface','Concrete','Butcher block','Laminate','Other'] },
     { name: 'Fabrication and installation', hasQty: true, unit: 'SF' },
     { name: 'Sink cutout type', options: ['Undermount','Vessel','Integrated','Drop-in'] },
     { name: 'Edge profile', options: ['Eased','Bullnose','Ogee','Beveled'] },
@@ -405,15 +406,15 @@ const BATHROOM_TRADES = [
   { name: 'Electrical Fixtures (Finish)', sub: 'Electrical', items: [
     { name: 'Vanity sconces/lights', hasQty: true },
     { name: 'Overhead light fixture' },
-    { name: 'Exhaust fan', options: ['Standard','With light','Humidity sensing','Heater combo'] },
+    { name: 'Exhaust fan', options: ['Standard','Whisper-quiet','With light','Humidity sensing','Heater combo','Whisper-quiet with light','Whisper-quiet humidity sensing'] },
     { name: 'Towel warmer', options: ['Hardwired','Plug-in','N/A'] },
   ]},
   { name: 'Flooring', sub: 'Flooring', items: [
     { name: 'Remove existing flooring' },
     { name: 'Subfloor prep/repair' },
     { name: 'Heated floor system', options: ['Electric mat','N/A'] },
-    { name: 'Flooring type', options: ['Porcelain tile','Ceramic tile','Natural stone','Marble','LVP'] },
-    { name: 'Installation area', hasQty: true, unit: 'SF' },
+    { name: 'Flooring type', options: ['Porcelain tile','Ceramic tile','Natural stone','Marble','LVP','Mosaic','Cement tile','Other'] },
+    { name: 'Square footage', hasQty: true, unit: 'SF' },
     { name: 'Base trim', options: ['Tile base','Wood baseboard','N/A'], hasQty: true, unit: 'LF' },
     { name: 'Threshold/transition', options: ['Marble saddle','Schluter','Wood','Flush'] },
   ]},
@@ -496,7 +497,234 @@ let moduleInstances = []; // { id, name, label, trades }
 let scopeData = {}; // moduleKey -> { tradeIdx -> { itemIdx -> { included, detail, notes, qty } } }
 let conditionsData = {};
 let exclusionsData = {};
+let additionalItems = {}; // moduleKey -> free-text string
 let currentStep = 0;
+
+function updateAdditionalItems(moduleKey, value) {
+  additionalItems[moduleKey] = value;
+  saveProjectToLocal();
+}
+
+// ============================================================
+// SAVE / LOAD PROJECT DATA (localStorage)
+// ============================================================
+function saveProjectToLocal() {
+  try {
+    const address = document.getElementById('propertyAddress')?.value || '';
+    if (!address) return; // Don't save without an address
+    const projectKey = 'hc_sow_' + address.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    const projectData = {
+      // Form fields
+      projectName: document.getElementById('projectName')?.value || '',
+      clientName: document.getElementById('clientName')?.value || '',
+      propertyAddress: address,
+      propertyType: document.getElementById('propertyType')?.value || '',
+      projectType: document.getElementById('projectType')?.value || '',
+      totalSF: document.getElementById('totalSF')?.value || '',
+      yearBuilt: document.getElementById('yearBuilt')?.value || '',
+      bedsBaths: document.getElementById('bedsBaths')?.value || '',
+      ownerOccupied: document.getElementById('ownerOccupied')?.value || '',
+      designFirm: document.getElementById('designFirm')?.value || '',
+      projectNotes: document.getElementById('projectNotes')?.value || '',
+      sowVersion: document.getElementById('sowVersion')?.value || '1.0',
+      sowStatus: document.getElementById('sowStatus')?.value || 'PRELIMINARY',
+      sowRevisionNotes: document.getElementById('sowRevisionNotes')?.value || '',
+      inputSourceType: document.getElementById('inputSourceType')?.value || '',
+      // State data
+      selectedModules,
+      scopeData,
+      conditionsData,
+      exclusionsData,
+      additionalItems,
+      // Module instance info for bathroom names etc.
+      bathNames: {},
+      bathTypes: {},
+      moduleCounts: {},
+      savedAt: new Date().toISOString()
+    };
+    // Save bathroom names and types
+    moduleInstances.forEach(inst => {
+      if (inst.id === 'bathroom') {
+        projectData.bathNames[inst.key] = document.getElementById(`bathname-${inst.key}`)?.value || '';
+        projectData.bathTypes[inst.key] = document.getElementById(`bathtype-${inst.key}`)?.value || '';
+      }
+    });
+    // Save module counts
+    MODULES.forEach(m => {
+      if (m.countable && selectedModules[m.id]) {
+        projectData.moduleCounts[m.id] = document.getElementById(`count-${m.id}`)?.value || '1';
+      }
+    });
+    localStorage.setItem(projectKey, JSON.stringify(projectData));
+    // Also maintain a list of saved project keys
+    let savedList = JSON.parse(localStorage.getItem('hc_sow_saved_projects') || '[]');
+    const existing = savedList.findIndex(p => p.key === projectKey);
+    const entry = { key: projectKey, name: projectData.projectName, address: address, savedAt: projectData.savedAt };
+    if (existing >= 0) {
+      savedList[existing] = entry;
+    } else {
+      savedList.push(entry);
+    }
+    localStorage.setItem('hc_sow_saved_projects', JSON.stringify(savedList));
+    updateSavedProjectsDropdown();
+  } catch (e) {
+    console.warn('Failed to save project:', e);
+  }
+}
+
+function loadProjectFromLocal(projectKey) {
+  try {
+    const raw = localStorage.getItem(projectKey);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+
+    // Restore form fields
+    const fieldMap = {
+      projectName: 'projectName', clientName: 'clientName', propertyAddress: 'propertyAddress',
+      propertyType: 'propertyType', projectType: 'projectType', totalSF: 'totalSF',
+      yearBuilt: 'yearBuilt', bedsBaths: 'bedsBaths', ownerOccupied: 'ownerOccupied',
+      designFirm: 'designFirm', projectNotes: 'projectNotes', sowVersion: 'sowVersion',
+      sowStatus: 'sowStatus', sowRevisionNotes: 'sowRevisionNotes', inputSourceType: 'inputSourceType'
+    };
+    Object.entries(fieldMap).forEach(([dataKey, elId]) => {
+      const el = document.getElementById(elId);
+      if (el && data[dataKey] !== undefined) el.value = data[dataKey];
+    });
+
+    // Restore input source display
+    if (data.inputSourceType) handleInputSourceChange();
+
+    // Restore state data
+    selectedModules = data.selectedModules || {};
+    scopeData = data.scopeData || {};
+    conditionsData = data.conditionsData || {};
+    exclusionsData = data.exclusionsData || {};
+    additionalItems = data.additionalItems || {};
+
+    // Restore module selection UI
+    MODULES.forEach(m => {
+      const card = document.getElementById(`mod-${m.id}`);
+      if (card) {
+        if (selectedModules[m.id]) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      }
+      // Restore counts
+      if (m.countable && data.moduleCounts && data.moduleCounts[m.id]) {
+        const countEl = document.getElementById(`count-${m.id}`);
+        if (countEl) countEl.value = data.moduleCounts[m.id];
+      }
+    });
+
+    // Build module steps to restore scope items
+    if (Object.keys(selectedModules).length > 0) {
+      buildModuleSteps();
+
+      // Restore scope item UI states
+      moduleInstances.forEach(inst => {
+        const instData = scopeData[inst.key] || {};
+        Object.entries(instData).forEach(([tIdx, tradeData]) => {
+          Object.entries(tradeData).forEach(([iIdx, itemData]) => {
+            const id = `${inst.key}-${tIdx}-${iIdx}`;
+            const el = document.getElementById(`si-${id}`);
+            const ti = document.getElementById(`ti-${id}`);
+            if (el && itemData.included) {
+              el.classList.add('included');
+              if (ti) ti.innerHTML = '&#x2713;';
+            }
+            // Restore detail/notes/qty
+            if (itemData.detail) {
+              const detEl = document.getElementById(`det-${id}`);
+              if (detEl) detEl.value = itemData.detail;
+            }
+            if (itemData.qty) {
+              const qtyEl = document.getElementById(`qty-${id}`);
+              if (qtyEl) qtyEl.value = itemData.qty;
+            }
+            if (itemData.notes) {
+              const notesEl = document.getElementById(`notes-${id}`);
+              if (notesEl) notesEl.value = itemData.notes;
+            }
+          });
+        });
+
+        // Restore bathroom names
+        if (inst.id === 'bathroom' && data.bathNames && data.bathNames[inst.key]) {
+          const bnEl = document.getElementById(`bathname-${inst.key}`);
+          if (bnEl) bnEl.value = data.bathNames[inst.key];
+        }
+        if (inst.id === 'bathroom' && data.bathTypes && data.bathTypes[inst.key]) {
+          const btEl = document.getElementById(`bathtype-${inst.key}`);
+          if (btEl) btEl.value = data.bathTypes[inst.key];
+        }
+
+        // Restore additional items text
+        if (additionalItems[inst.key]) {
+          const addlEl = document.getElementById(`additional-${inst.key}`);
+          if (addlEl) addlEl.value = additionalItems[inst.key];
+        }
+      });
+
+      // Restore conditions UI
+      GENERAL_CONDITIONS.forEach((sec, sIdx) => {
+        const secData = conditionsData[sIdx] || {};
+        Object.entries(secData).forEach(([iIdx, isOn]) => {
+          if (isOn) {
+            const el = document.getElementById(`gc-${sIdx}-${iIdx}`);
+            const ti = document.getElementById(`gci-${sIdx}-${iIdx}`);
+            if (el) el.classList.add('included');
+            if (ti) ti.innerHTML = '&#x2713;';
+          }
+        });
+      });
+
+      // Restore exclusions UI
+      Object.entries(exclusionsData).forEach(([i, isOn]) => {
+        if (isOn) {
+          const el = document.getElementById(`ex-${i}`);
+          const ti = document.getElementById(`exi-${i}`);
+          if (el) el.classList.add('included');
+          if (ti) ti.innerHTML = '&#x2713;';
+        }
+      });
+
+      // Go to project setup after loading
+      goToStep(0);
+    }
+
+    return true;
+  } catch (e) {
+    console.warn('Failed to load project:', e);
+    return false;
+  }
+}
+
+function updateSavedProjectsDropdown() {
+  const dropdown = document.getElementById('savedProjectsDropdown');
+  const section = document.getElementById('savedProjectsSection');
+  if (!dropdown || !section) return;
+  const savedList = JSON.parse(localStorage.getItem('hc_sow_saved_projects') || '[]');
+  if (savedList.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  dropdown.innerHTML = '<option value="">-- Select a saved project --</option>';
+  savedList.forEach(p => {
+    const date = p.savedAt ? new Date(p.savedAt).toLocaleDateString() : '';
+    dropdown.innerHTML += `<option value="${p.key}">${p.name || 'Untitled'} — ${p.address} (${date})</option>`;
+  });
+}
+
+function loadSelectedProject() {
+  const dropdown = document.getElementById('savedProjectsDropdown');
+  if (!dropdown || !dropdown.value) return;
+  if (confirm('Load this saved project? Current unsaved changes will be lost.')) {
+    loadProjectFromLocal(dropdown.value);
+  }
+}
 
 // ============================================================
 // MODULE SELECTOR
@@ -590,6 +818,20 @@ function buildModuleSteps() {
         <h2>${inst.label}</h2>
         <div class="subtitle">Check items to include, then fill in details</div>
         ${renderTrades(inst.trades, inst.key)}
+        <div class="trade-section" style="margin-top:16px;">
+          <div class="trade-header" onclick="toggleTrade(this)" style="background:#C9A84C;">
+            Additional Items Not Listed Above
+            <span class="toggle">&#x25BC;</span>
+          </div>
+          <div class="trade-body">
+            <div style="padding:8px 0;">
+              <label class="detail-label">If there is anything not captured above, add it here. Each line will be included in the scope.</label>
+              <textarea id="additional-${inst.key}" rows="5" style="width:100%; padding:10px; border:1px solid #CBD5E0; border-radius:6px; font-family:inherit; font-size:14px; line-height:1.6;"
+                placeholder="Example: Install custom niche with LED strip lighting in shower&#10;Example: Add blocking for future towel warmer&#10;Example: Match existing crown molding profile in adjacent hallway"
+                onchange="updateAdditionalItems('${inst.key}', this.value)">${additionalItems[inst.key] || ''}</textarea>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="btn-nav">
         <button class="btn btn-outline" onclick="goToModuleStep(${idx - 1})">&#x2190; Back</button>
@@ -696,6 +938,7 @@ function toggleItem(id, moduleKey, tIdx, iIdx) {
   if (!scopeData[moduleKey][tIdx]) scopeData[moduleKey][tIdx] = {};
   if (!scopeData[moduleKey][tIdx][iIdx]) scopeData[moduleKey][tIdx][iIdx] = {};
   scopeData[moduleKey][tIdx][iIdx].included = isIncluded;
+  saveProjectToLocal();
 }
 
 function updateItemData(moduleKey, tIdx, iIdx, field, value) {
@@ -703,6 +946,7 @@ function updateItemData(moduleKey, tIdx, iIdx, field, value) {
   if (!scopeData[moduleKey][tIdx]) scopeData[moduleKey][tIdx] = {};
   if (!scopeData[moduleKey][tIdx][iIdx]) scopeData[moduleKey][tIdx][iIdx] = {};
   scopeData[moduleKey][tIdx][iIdx][field] = value;
+  saveProjectToLocal();
 }
 
 function toggleTrade(header) {
@@ -1042,7 +1286,12 @@ const narrativeMap = {
 
   // Kitchen Backsplash
   'Backsplash type': (detail) => detail === 'N/A' ? null : `Install ${detail ? detail.toLowerCase() : ''} backsplash per design plans`,
-  'Backsplash material': (detail, notes) => notes ? `Backsplash material: ${notes}` : null,
+  'Backsplash material': (detail, notes) => {
+    let text = detail ? `Backsplash material: ${detail.toLowerCase()}` : null;
+    if (text && notes) text += `. ${notes}`;
+    else if (!text && notes) text = `Backsplash material: ${notes}`;
+    return text;
+  },
   'Pattern/layout': (detail) => detail ? `Install in ${detail.toLowerCase()} pattern per design plans` : null,
   'Behind range detail': (detail) => detail === 'Same as rest' ? null : `Install ${detail ? detail.toLowerCase() : 'accent'} detail behind range`,
 
@@ -1050,7 +1299,7 @@ const narrativeMap = {
   'Remove existing flooring': () => 'Remove existing flooring to subfloor',
   'Subfloor prep/repair/leveling': () => 'Prepare, repair, and level subfloor as needed',
   'Flooring type': (detail) => `Install ${detail ? detail.toLowerCase() : ''} flooring per design plans`,
-  'Installation area': (detail, notes, qty) => qty ? `Flooring installation area: ${qty} SF` : null,
+  'Square footage': (detail, notes, qty) => qty ? `Flooring area: approximately ${qty} SF` : null,
   'Transitions to adjacent rooms': (detail) => `Install ${detail ? detail.toLowerCase() : ''} transitions to adjacent rooms`,
   'Base trim / shoe molding': (detail, notes, qty) => `Install ${detail ? detail.toLowerCase() : 'new'} base trim${qty ? ' (' + qty + ' LF)' : ''}`,
 
@@ -1149,13 +1398,14 @@ const narrativeMap = {
   'Flood test / inspection': () => 'Perform flood test and coordinate waterproofing inspection',
 
   // Bathroom Tile
+  'Tile material': (detail) => detail ? `Primary tile material: ${detail.toLowerCase()}` : null,
   'Floor tile': (detail, notes, qty) => `Install ${notes ? notes + ' ' : ''}floor tile${qty ? ' (' + qty + ' SF)' : ''}`,
   'Shower floor tile': (detail) => `Install ${detail ? detail.toLowerCase() : ''} shower floor tile. Note: shower floor tile is installed with slope to drain per waterproofing specifications`,
   'Shower wall tile height': (detail) => `Install shower wall tile ${detail ? detail.toLowerCase() : 'to ceiling'}. Tile size and layout per design plans; grout color per owner selection`,
   'Shower niche(s)': (detail, notes, qty) => `Tile ${qty ? qty + ' ' : ''}shower niche${qty > 1 ? 's' : ''} with coordinating tile. Niche dimensions per design; shelf trim per tile selection`,
   'Accent tile / feature wall': (detail, notes) => notes ? `Install accent tile/feature wall: ${notes}. Note: accent tile may require additional layout time depending on pattern complexity` : 'Install accent tile per design plans',
   'Tub surround tile': (detail) => detail === 'N/A' ? null : `Install tub surround tile ${detail ? detail.toLowerCase() : ''}`,
-  'Wainscoting': (detail, notes, qty) => `Install ${detail ? detail.toLowerCase() : ''} wainscoting${qty ? ' (' + qty + ' LF)' : ''} per design plans`,
+  'Wainscoting / wall tile type': (detail, notes, qty) => `Install ${detail ? detail.toLowerCase() : ''} wainscoting/wall tile${qty ? ' (' + qty + ' LF)' : ''} per design plans`,
   'Tile layout/pattern': (detail) => detail ? `Layout: ${detail.toLowerCase()} pattern per design plans. Note: complex patterns (herringbone, chevron) require additional labor` : null,
   'Tile size': (detail) => detail ? `Tile size: ${detail}. Note: tile size affects layout complexity and labor` : null,
   'Grout color': (detail) => detail ? `Grout color: ${detail}` : null,
@@ -1229,15 +1479,6 @@ function toNarrative(itemName, detail, notes, qty, unit) {
     if (detail && detail !== 'Yes') text += ` - ${detail}`;
     if (qty) text += ` (${qty}${unit ? ' ' + unit : ''})`;
     if (notes) text += `. ${notes}`;
-  }
-
-  // Plan reference tagging: if plans or combined source, check for sheet references
-  const sourceType = document.getElementById('inputSourceType')?.value;
-  if (sourceType === 'plans' || sourceType === 'combined') {
-    const hasRef = /\[.*(?:Sheet|sheet|A\d|S\d|E\d|M\d|Schedule|Detail|Plan)/i.test(notes || '');
-    if (!hasRef) {
-      text += ` <span class="no-plan-ref">[NO PLAN REFERENCE \u2014 VERIFY BEFORE BIDDING]</span>`;
-    }
   }
 
   return text;
@@ -1651,9 +1892,9 @@ function generateCaliforniaCompliance(yearBuilt) {
 }
 
 // ============================================================
-// TL;DR DATA — Quick-reference summaries for Trade Version
+// SUMMARY DATA — Quick-reference summaries for Trade Version
 // ============================================================
-const TRADE_TLDR = {
+const TRADE_SUMMARY = {
   'Demolition': {
     doing: 'Remove all existing materials as listed in the scope items below',
     supplying: 'Dumpster, labor, and hauling. Honeycomb provides floor protection and dust barriers',
@@ -1765,20 +2006,20 @@ const TRADE_TLDR = {
 };
 
 // ============================================================
-// TL;DR RENDER HELPER
+// SUMMARY RENDER HELPER
 // ============================================================
-function renderTLDR(tradeName) {
+function renderSummary(tradeName) {
   const name = tradeName.toLowerCase();
-  let tldr = null;
-  for (const [key, val] of Object.entries(TRADE_TLDR)) {
-    if (name.includes(key.toLowerCase())) { tldr = val; break; }
+  let summary = null;
+  for (const [key, val] of Object.entries(TRADE_SUMMARY)) {
+    if (name.includes(key.toLowerCase())) { summary = val; break; }
   }
-  if (!tldr) return '';
-  return `<div class="sow-tldr"><div class="tldr-title">TL;DR — ${tradeName.toUpperCase()}</div>
-    <strong>What you are doing:</strong> ${typeof tldr.doing === 'function' ? tldr.doing() : tldr.doing}<br>
-    <strong>What you are responsible for supplying:</strong> ${tldr.supplying}<br>
-    <strong>What done looks like:</strong> ${tldr.done}<br>
-    <strong>What you must not do before notifying Honeycomb:</strong> ${tldr.stopWork}
+  if (!summary) return '';
+  return `<div class="sow-summary-block"><div class="summary-title">SUMMARY — ${tradeName.toUpperCase()}</div>
+    <strong>What you are doing:</strong> ${typeof summary.doing === 'function' ? summary.doing() : summary.doing}<br>
+    <strong>What you are responsible for supplying:</strong> ${summary.supplying}<br>
+    <strong>What done looks like:</strong> ${summary.done}<br>
+    <strong>What you must not do before notifying Honeycomb:</strong> ${summary.stopWork}
   </div>`;
 }
 
@@ -1894,7 +2135,7 @@ function generateSOW(returnOnly) {
         if (items.length === 0) return;
         sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">${secNum}. ${trade.name}:</span></div>`;
         // Add TL;DR for this trade
-        sow += renderTLDR(trade.name);
+        sow += renderSummary(trade.name);
         sow += `<ol class="narrative-items">`;
         items.forEach(text => { sow += `<li>${text}</li>`; });
         sow += `</ol>`;
@@ -1903,6 +2144,19 @@ function generateSOW(returnOnly) {
         sow += `</div>`;
         secNum++;
       });
+
+      // Additional Items for generic modules
+      const addlGeneric = additionalItems[inst.key];
+      if (addlGeneric) {
+        const addlGenericLines = addlGeneric.split('\n').filter(l => l.trim());
+        if (addlGenericLines.length > 0) {
+          sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">Additional Items:</span></div>`;
+          sow += `<ol class="narrative-items">`;
+          addlGenericLines.forEach(line => { sow += `<li>${line.trim()}</li>`; });
+          sow += `</ol></div>`;
+        }
+      }
+
       return;
     }
 
@@ -1939,7 +2193,7 @@ function generateSOW(returnOnly) {
       phase.trades.forEach(tIdx => {
         const trade = inst.trades[tIdx];
         if (trade && allPhaseItems[tIdx]) {
-          sow += renderTLDR(trade.name);
+          sow += renderSummary(trade.name);
         }
       });
 
@@ -1979,6 +2233,18 @@ function generateSOW(returnOnly) {
       sow += `</div>`;
       secNum++;
     });
+
+    // Additional Items (free-text)
+    const addlTrade = additionalItems[inst.key];
+    if (addlTrade) {
+      const addlLines = addlTrade.split('\n').filter(l => l.trim());
+      if (addlLines.length > 0) {
+        sow += `<div class="narrative-section"><div class="section-heading"><span class="sow-section-num">Additional Items:</span></div>`;
+        sow += `<ol class="narrative-items">`;
+        addlLines.forEach(line => { sow += `<li>${line.trim()}</li>`; });
+        sow += `</ol></div>`;
+      }
+    }
 
     // Finishing Materials / Important Notes
     let ownerItems = [];
@@ -2171,10 +2437,8 @@ function generateClientSOW() {
     }
 
     sow += `<h3 style="font-size:16px; color:var(--navy); margin-top:20px;">${title}</h3>`;
-    sow += `<p style="line-height:1.7; color:#4A5568;">`;
+    sow += `<ul style="margin:0 0 12px 20px; color:#4A5568; line-height:1.8;">`;
 
-    // Collect all included items across all trades for this module
-    let descriptions = [];
     inst.trades.forEach((trade, tIdx) => {
       const tradeData = data[tIdx] || {};
       Object.entries(tradeData).forEach(([iIdx, itemData]) => {
@@ -2182,16 +2446,19 @@ function generateClientSOW() {
         const itemDef = trade.items[parseInt(iIdx)];
         if (!itemDef) return;
         let text = toNarrativeClient(itemDef.name, itemData.detail, itemData.notes, itemData.qty);
-        if (text) descriptions.push(text);
+        if (text) sow += `<li>${text}</li>`;
       });
     });
 
-    if (descriptions.length > 0) {
-      sow += `In this space, we will: `;
-      sow += descriptions.map((d, i) => i === 0 ? d.charAt(0).toLowerCase() + d.slice(1) : d.toLowerCase()).join('; ');
-      sow += '.';
+    // Additional items
+    const addl = additionalItems[inst.key];
+    if (addl) {
+      addl.split('\n').filter(l => l.trim()).forEach(line => {
+        sow += `<li>${line.trim()}</li>`;
+      });
     }
-    sow += `</p>`;
+
+    sow += `</ul>`;
   });
 
   // Materials and Selections
@@ -2385,6 +2652,23 @@ function generateEstimatingInput() {
 
       html += `</div>`;
     });
+
+    // Additional Items for this module (estimating)
+    const addlEst = additionalItems[inst.key];
+    if (addlEst) {
+      const addlEstLines = addlEst.split('\n').filter(l => l.trim());
+      if (addlEstLines.length > 0) {
+        html += `<div class="est-trade-block">`;
+        html += `<div class="est-trade-name">ADDITIONAL ITEMS (${moduleTitle})</div>`;
+        html += `<div class="est-field"><strong>LABOR SCOPE:</strong>`;
+        html += `<ul style="margin:4px 0 0 20px;">`;
+        addlEstLines.forEach(line => { html += `<li>${line.trim()}</li>`; });
+        html += `</ul></div>`;
+        html += `<div class="est-field"><strong>QUANTITIES:</strong> Per line item — verify with Honeycomb.</div>`;
+        html += `<div class="est-field"><strong>NOTES:</strong> These items were added manually and may require additional trade coordination.</div>`;
+        html += `</div>`;
+      }
+    }
   });
 
   // Open Items
@@ -2514,6 +2798,7 @@ function generateAllVersions() {
   // Activate first tab
   if (firstTab) switchSOWTab(firstTab);
   document.getElementById('sowOutputContainer').scrollIntoView({ behavior: 'smooth' });
+  saveProjectToLocal();
 }
 
 function switchSOWTab(type) {
@@ -2558,6 +2843,58 @@ function copySOW() {
 }
 
 // ============================================================
+// PRINT AS PDF
+// ============================================================
+function printSOWasPDF() {
+  const type = window._activeSOWTab || 'Trade';
+  const el = document.getElementById('sowOutput' + type);
+  if (!el) return;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Honeycomb SOW - ${type} Version</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #1A202C; max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 22px; color: #1B3A5C; border-bottom: 2px solid #C9A84C; padding-bottom: 8px; }
+        h2 { font-size: 18px; color: #1B3A5C; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; margin-top: 24px; }
+        h3 { font-size: 15px; color: #1B3A5C; margin-top: 16px; }
+        p, li { font-size: 13px; line-height: 1.6; color: #2D3748; }
+        ul, ol { margin-left: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+        th, td { border: 1px solid #CBD5E0; padding: 6px 8px; text-align: left; }
+        th { background: #EDF2F7; font-weight: 700; }
+        .sow-meta { background: #F7FAFC; padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; }
+        .sow-exclusion { color: #E53E3E; }
+        .sow-compliance-box { background: #FFF5F5; border: 1px solid #FED7D7; padding: 12px; border-radius: 4px; margin: 12px 0; }
+        .sow-preliminary-box { background: #FFFBEB; border: 2px solid #F6AD55; padding: 16px; border-radius: 6px; margin-bottom: 20px; font-weight: 700; }
+        .sow-internal-block { background: #FFF5F5; border: 2px solid #E53E3E; padding: 12px; border-radius: 4px; margin: 12px 0; }
+        .internal-title { color: #E53E3E; font-weight: 700; font-size: 13px; }
+        .sow-summary-block { background: #F7FAFC; border: 1px solid #CBD5E0; border-left: 4px solid #1B3A5C; padding: 12px; margin: 8px 0; }
+        .summary-title { font-weight: 700; color: #1B3A5C; }
+        .est-header { background: #1A202C; color: #FFF; padding: 14px; font-family: monospace; font-size: 12px; }
+        .est-trade-block { border: 1px solid #CBD5E0; border-left: 4px solid #1B3A5C; padding: 12px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+        .est-trade-name { font-weight: 700; color: #1B3A5C; }
+        .est-unknown { color: #E53E3E; font-weight: 700; }
+        .est-open-items { background: #FFF5F5; border: 2px solid #E53E3E; padding: 14px; margin: 16px 0; }
+        .est-summary { background: #F0FFF4; border: 2px solid #38A169; padding: 14px; margin: 16px 0; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head>
+    <body>
+      ${el.innerHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 500);
+}
+
+// ============================================================
 // INIT
 // ============================================================
 renderModuleGrid();
+updateSavedProjectsDropdown();

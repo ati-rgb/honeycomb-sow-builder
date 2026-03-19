@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><title>Parse Test</title></head>
+<body>
+<pre id="output">Checking...</pre>
+<script>
+window.onerror = function(msg, source, lineno, colno) {
+  var el = document.getElementById("output");
+  el.textContent += "
+ERROR at line " + lineno + " col " + colno + ": " + msg;
+  return true;
+};
+</script>
+<script>
+// Try to parse app.js without executing DOM-dependent code
+fetch("/app.js").then(r => r.text()).then(txt => {
+  try {
+    new Function(txt);
+    document.getElementById("output").textContent = "PARSE OK - no syntax errors";
+  } catch(e) {
+    document.getElementById("output").textContent = "PARSE ERROR: " + e.message;
+  }
+});
+</script>
+</body></html>

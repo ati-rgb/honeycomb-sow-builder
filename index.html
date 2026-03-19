@@ -677,19 +677,20 @@ header .project-badge {
 .sow-version-tab:hover {
   color: var(--navy);
 }
-.sow-output .sow-tldr {
+.sow-output .sow-summary-block {
   background: #F7FAFC;
   border: 1px solid #CBD5E0;
+  border-left: 4px solid var(--navy);
   border-radius: 6px;
   padding: 14px 18px;
   margin: 8px 0 16px 0;
   font-size: 13px;
   line-height: 1.6;
 }
-.sow-output .sow-tldr strong {
+.sow-output .sow-summary-block strong {
   color: var(--navy);
 }
-.sow-output .sow-tldr .tldr-title {
+.sow-output .sow-summary-block .summary-title {
   font-weight: 700;
   font-size: 14px;
   color: var(--navy);
@@ -1059,6 +1060,14 @@ header .project-badge {
       <h2>Project Information</h2>
       <div class="subtitle">Basic property and client details</div>
 
+      <div class="form-group" id="savedProjectsSection" style="display:none; margin-bottom:16px; padding:12px; background:#F7FAFC; border-radius:8px; border:1px solid #E2E8F0;">
+        <label>Saved Projects</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="savedProjectsDropdown" style="flex:1;"></select>
+          <button class="btn btn-outline" onclick="loadSelectedProject()" style="white-space:nowrap; padding:8px 16px;">Load Project</button>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label>Project Name</label>
@@ -1303,6 +1312,7 @@ header .project-badge {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h2 style="margin: 0;">Generated Scope of Work</h2>
           <button class="btn btn-primary" onclick="copyActiveSOW()">Copy to Clipboard</button>
+          <button class="btn btn-outline" onclick="printSOWasPDF()" style="margin-left:8px;">Print as PDF</button>
         </div>
         <div id="sowVersionTabs" style="display:flex; gap:4px; margin-bottom:16px; border-bottom:2px solid #E2E8F0; padding-bottom:0;">
         </div>
