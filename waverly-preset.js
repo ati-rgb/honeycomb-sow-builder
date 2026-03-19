@@ -1,12 +1,12 @@
 // ============================================================
 // WAVERLY PROJECT PRESET DATA
-// Pre-loads all scope data for 5640 Waverly Ave, La Jolla
+// Pre-loads all scope data for 5640 Waverly Place, La Jolla
 // ============================================================
 
 const WAVERLY_PRESET = {
   projectInfo: {
     projectName: 'Waverly',
-    propertyAddress: '5640 Waverly Ave, La Jolla',
+    propertyAddress: '5640 Waverly Place, La Jolla, CA',
     clientName: 'Sarah Street',
     propertyType: 'Single Family',
     projectType: 'Kitchen + Bathrooms',
@@ -18,7 +18,7 @@ const WAVERLY_PRESET = {
     planSheets: 'Kitchen shop drawings, Bath 2 shop drawings, Pool Bath shop drawings',
     designDocs: 'Waverly Materials Lists (Kitchen, Primary Bath, Girls Bath, Pool Bath)',
     sowVersion: '1.0',
-    sowStatus: 'PRELIMINARY',
+    sowStatus: 'APPROVED',
     sowRevisionNotes: 'Initial issue from budget and materials lists.',
   },
   selectedModules: { kitchen: true, bathroom: true },
@@ -52,19 +52,27 @@ const WAVERLY_PRESET = {
       },
       // PLUMBING
       2: {
-        0: { included: true, detail: 'Same location', notes: 'Rough plumbing for farmhouse sink' },
-        1: { included: true, notes: 'Dishwasher supply and drain' },
-        3: { included: true, notes: 'Gas line for ILVE range at existing location' },
-        5: { included: true, notes: 'Garbage disposal rough-in' },
+        0: { included: true, detail: 'Same location', notes: 'Install sink rough-in at existing location' },
+        1: { included: true, notes: 'Install dishwasher water supply and drain lines' },
+        3: { included: true, notes: 'Connect gas line for range per code' },
+        4: { included: true, notes: 'Run new ice maker water line to refrigerator location' },
+        5: { included: true, notes: 'Install rough-in for garbage disposal with dedicated circuit' },
+        6: { included: true, notes: 'Install pot filler rough-in at range location per plans' },
+        7: { included: true, notes: 'Install new shut-off valves at all plumbing fixtures' },
       },
       // ELECTRICAL
       3: {
-        0: { included: true, qty: '4', notes: 'Dedicated circuits: range, refrigerator, microwave, dishwasher' },
-        1: { included: true, notes: 'Under-cabinet LED strip lighting rough-in' },
-        2: { included: true, notes: 'Pendant lighting rough-in over island - 3 pendants' },
-        5: { included: true, notes: 'Range hood electrical connection' },
-        6: { included: true, notes: 'All outlets and switches per code' },
-        8: { included: true, qty: '6', notes: 'Recessed lighting throughout kitchen' },
+        0: { included: true, detail: '240V electric', notes: 'Dedicated circuit: Range 240V' },
+        1: { included: true, notes: 'Dedicated circuit: Refrigerator' },
+        2: { included: true, notes: 'Dedicated circuit: Dishwasher' },
+        3: { included: true, notes: 'Dedicated circuit: Microwave' },
+        4: { included: true, notes: 'Dedicated circuit: Garbage disposal' },
+        5: { included: true, notes: 'GFCI countertop outlets per code' },
+        6: { included: true, notes: 'Under-cabinet lighting circuit' },
+        7: { included: true, notes: 'Pendant lighting circuit over island' },
+        8: { included: true, qty: '6', notes: '6 recessed lights throughout kitchen' },
+        11: { included: true, notes: 'Range hood electrical connection' },
+        12: { included: true, notes: 'Island electrical outlets' },
       },
       // HVAC
       4: {
@@ -79,62 +87,59 @@ const WAVERLY_PRESET = {
       },
       // CABINETRY
       6: {
-        0: { included: true, detail: 'New custom', notes: 'Custom painted cabinets in sage green per design' },
+        0: { included: true, detail: 'New semi-custom', notes: 'Semi-custom painted cabinets in sage green per design' },
         1: { included: true, qty: '7', notes: '7 base cabinet types per shop drawings' },
         2: { included: true, qty: '2', notes: '2 upper cabinet styles per shop drawings' },
         3: { included: true, qty: '1', notes: 'Full-height pantry cabinet' },
         4: { included: true, notes: 'Island cabinets per design' },
         6: { included: true, detail: 'Pulls', qty: '45', notes: '42 cabinet pulls + 3 appliance pulls' },
-        8: { included: true, qty: '6', notes: '6 reeded glass panels for upper cabinets' },
+        8: { included: true, qty: '4', notes: '4 reeded glass panels for upper cabinets' },
         9: { included: true, notes: 'Soft-close on all doors and drawers' },
       },
       // COUNTERTOPS
       7: {
-        0: { included: true, detail: 'Quartz', notes: 'Quartz countertops per materials list' },
-        1: { included: true, qty: '134', notes: '134 SF estimated' },
-        2: { included: true, detail: 'Mitered', notes: 'Mitered edge per design' },
-        3: { included: true, detail: 'Island', notes: 'Waterfall edge on island' },
-        4: { included: true, notes: 'Farmhouse sink cutout' },
-        5: { included: true, notes: 'Cooktop cutout for ILVE range' },
+        0: { included: true, detail: 'Other', notes: 'Quartzite' },
+        1: { included: true, qty: '40', notes: '40 SF estimated' },
+        2: { included: true, detail: 'Eased', notes: 'Eased edge profile' },
+        4: { included: true, notes: 'Sink cutout' },
       },
       // BACKSPLASH
       8: {
-        0: { included: true, detail: 'To underside of uppers', notes: 'Full backsplash to underside of upper cabinets' },
-        1: { included: true, detail: 'Marble', notes: 'Full-height marble slab backsplash' },
-        2: { included: true, detail: 'Brick/offset', notes: 'Brick/offset pattern' },
-        3: { included: true, detail: 'Full slab', notes: 'Full slab behind range area' },
+        0: { included: true, detail: 'To ceiling', notes: 'Full-height slab backsplash to ceiling' },
       },
       // FLOORING
       9: {
         0: { included: true, notes: 'Remove existing tile flooring' },
         1: { included: true, notes: 'Subfloor prep and leveling as needed' },
         2: { included: true, detail: 'Porcelain tile', notes: 'Specialty terracotta-look porcelain tile' },
-        3: { included: true, qty: '262', notes: '262 SF per materials list' },
-        4: { included: true, detail: 'Custom', notes: 'Pattern layout per design specifications' },
-        5: { included: true, detail: 'Flush', notes: 'Flush transitions to adjacent rooms' },
-        6: { included: true, detail: 'New', qty: '40', notes: 'New baseboards, estimated 40 LF' },
+        3: { included: true, qty: '100', notes: '100 SF' },
+        4: { included: true, detail: 'Straight', notes: 'Straight pattern layout' },
+        5: { included: true, detail: 'T-molding', notes: 'T-molding transitions to adjacent rooms' },
+        6: { included: true, detail: 'Match existing', qty: '20', notes: 'Match existing baseboards, estimated 20 LF' },
       },
       // PAINTING
       10: {
         0: { included: true, notes: 'Wall prep, patching, sanding, priming' },
-        1: { included: true, notes: 'Paint all kitchen walls' },
+        1: { included: true, qty: '200', notes: 'Paint all kitchen walls, 200 SF' },
         2: { included: true, notes: 'Paint kitchen ceiling' },
         3: { included: true, notes: 'Paint all trim and baseboards' },
-        4: { included: true, detail: '3-4', notes: '3-4 colors for kitchen' },
+        4: { included: true, detail: '1', notes: '1 color for kitchen' },
       },
       // PLUMBING FIXTURES
       11: {
-        0: { included: true, detail: 'Farmhouse/apron', notes: 'Ruvati Fiore 33" farmhouse sink' },
+        0: { included: true, detail: 'Undermount', notes: 'Undermount sink' },
         1: { included: true, detail: 'Bridge', notes: 'Hansgrohe Talis N faucet' },
         2: { included: true, detail: 'Brushed gold', notes: 'Brushed gold finish to match design' },
         3: { included: true, detail: 'Premium/quiet', notes: 'Premium quiet garbage disposal' },
         4: { included: true, notes: 'Air switch for disposal' },
+        5: { included: true, detail: 'Countertop mount', notes: 'Countertop mount soap dispenser' },
       },
       // ELECTRICAL FIXTURES
       12: {
         0: { included: true, notes: 'LED strip lighting under all cabinets' },
-        1: { included: true, qty: '3', notes: '3 West Elm Henry pendant lights over island' },
-        2: { included: true, notes: 'Dimmer switches throughout' },
+        1: { included: true, qty: '2', notes: '2 pendant lights over island' },
+        2: { included: true, notes: 'Under-cabinet lights' },
+        3: { included: true, detail: 'Standard', notes: 'Standard switch plates and outlet covers' },
       },
       // APPLIANCES
       13: {
@@ -177,22 +182,26 @@ const WAVERLY_PRESET = {
         1: { included: true, detail: 'Linear', notes: 'Linear drain for curbless shower' },
         2: { included: true, detail: 'Thermostatic', notes: 'Signature Hardware thermostatic shower system' },
         3: { included: true, detail: 'Rain + handheld', notes: 'Rain showerhead plus handheld' },
-        4: { included: true, notes: 'Relocate tub plumbing to new freestanding tub location' },
-        5: { included: true, notes: 'Rough plumbing for 92" double sink vanity' },
+        4: { included: true, detail: 'Drop-in', notes: 'Drop-in tub rough-in' },
+        5: { included: true, notes: 'Rough plumbing for double sink vanity' },
         6: { included: true, notes: 'Toilet rough-in for TOTO Nexus' },
+        7: { included: true, detail: 'Floor standing', notes: 'Install vanity (floor standing) per plans' },
+        10: { included: true, notes: 'Relocate plumbing lines per plans' },
+        11: { included: true, notes: 'Install new shut-off valves' },
       },
       // ELECTRICAL
       3: {
-        0: { included: true, notes: 'New circuits for primary bathroom' },
-        1: { included: true, qty: '6', notes: '6 Greenwich sconce rough-ins' },
-        2: { included: true, qty: '2', notes: '2 Panasonic exhaust fan rough-ins' },
+        0: { included: true, notes: 'Vanity lighting circuit' },
+        1: { included: true, notes: 'Overhead lighting circuit' },
+        2: { included: true, notes: 'Exhaust fan circuit' },
         3: { included: true, notes: 'GFCI outlets per code' },
-        5: { included: true, notes: 'Bidet seat outlet for TOTO Washlet' },
-        6: { included: true, notes: 'Heated floor thermostat wiring' },
+        4: { included: true, detail: 'Electric mat', notes: 'Heated floor circuit' },
+        5: { included: true, detail: 'Hardwired', notes: 'Towel warmer circuit' },
+        6: { included: true, notes: 'Bidet seat outlet for TOTO Washlet' },
       },
       // WATERPROOFING
       4: {
-        0: { included: true, detail: 'Sheet membrane (Kerdi)', notes: 'Kerdi system for curbless shower' },
+        0: { included: true, detail: 'Pre-formed pan', notes: 'Pre-formed pan for shower' },
         1: { included: true, detail: 'Kerdi board', notes: 'Kerdi board on shower walls' },
         2: { included: true, detail: 'N/A (curbless)', notes: 'Curbless design' },
         4: { included: true, notes: 'Shower bench waterproofing' },
@@ -202,28 +211,28 @@ const WAVERLY_PRESET = {
       // TILE
       5: {
         0: { included: true, detail: 'Porcelain', notes: 'Calacatta porcelain for tile material' },
-        1: { included: true, qty: '395', notes: '395 SF Calacatta porcelain floor tile' },
+        1: { included: true, qty: '100', notes: '100 SF Calacatta porcelain floor tile' },
         2: { included: true, detail: 'Porcelain mosaic', notes: '24 SF mosaic tile for shower floor' },
-        3: { included: true, detail: 'To ceiling', notes: 'Shower wall tile to ceiling' },
-        4: { included: true, qty: '2', notes: '2 shower niches' },
+        3: { included: true, detail: 'Full surround', notes: 'Shower wall tile full surround' },
+        4: { included: true, qty: '1', notes: '1 shower niche' },
         5: { included: true, notes: '140 SF wall tile + 26 SF accent tiles' },
-        7: { included: true, detail: 'N/A', notes: 'N/A for primary bath' },
-        8: { included: true, detail: 'Brick/offset', notes: 'Brick/offset pattern for wall tile' },
+        8: { included: true, detail: 'Straight', notes: 'Straight pattern for wall tile' },
         9: { included: true, notes: 'Schluter edge trim at tile transitions' },
         10: { included: true, notes: 'Professional grouting and sealing throughout' },
       },
       // CABINETRY
       6: {
-        0: { included: true, detail: 'Custom built', notes: 'Custom 92" double vanity' },
-        1: { included: true, detail: '92"+', notes: '92" vanity per design' },
-        3: { included: true, detail: 'Recessed', qty: '3', notes: '3 Eaton recessed medicine cabinets' },
+        0: { included: true, detail: 'Custom built', notes: 'Custom double vanity' },
+        1: { included: true, detail: '72"', notes: '72" vanity per design' },
+        2: { included: true, detail: 'Built-in', notes: 'Built-in linen cabinet' },
+        3: { included: true, detail: 'Recessed', qty: '2', notes: '2 Eaton recessed medicine cabinets' },
         4: { included: true, detail: 'Yes - custom', notes: 'Storage cabinet per design' },
         5: { included: true, notes: 'Hardware in aged brass finish' },
       },
       // COUNTERTOPS
       7: {
         0: { included: true, detail: 'Quartz', notes: 'Quartz countertop for 92" vanity' },
-        1: { included: true, qty: '50', notes: '50 SF estimated' },
+        1: { included: true, qty: '140', notes: '140 SF estimated' },
         2: { included: true, detail: 'Undermount', notes: 'Double undermount sink cutouts' },
         3: { included: true, detail: 'Eased', notes: 'Eased edge profile' },
       },
@@ -236,7 +245,7 @@ const WAVERLY_PRESET = {
       },
       // PLUMBING FIXTURES
       9: {
-        0: { included: true, detail: 'Standard 2-piece', notes: 'TOTO Nexus with Washlet bidet seat' },
+        0: { included: true, detail: 'Smart toilet', notes: 'Smart toilet' },
         1: { included: true, detail: 'Bidet seat (Washlet)', notes: 'TOTO Washlet bidet seat' },
         2: { included: true, detail: 'Undermount', notes: '2 undermount sinks' },
         3: { included: true, detail: 'Widespread', notes: '2 Greyfield widespread faucets' },
@@ -244,25 +253,24 @@ const WAVERLY_PRESET = {
         5: { included: true, notes: 'Signature Hardware shower system with thermostatic valve' },
         6: { included: true, detail: 'Freestanding', notes: 'Kohler freestanding soaking tub' },
         7: { included: true, detail: 'Freestanding floor mount', notes: 'Lentz freestanding tub filler in brushed gold' },
-        8: { included: true, qty: '4', notes: '4 towel bars' },
+        8: { included: true, qty: '2', notes: '2 towel bars' },
         9: { included: true, notes: 'Toilet paper holder in aged brass' },
-        10: { included: true, qty: '4', notes: '4 robe hooks' },
+        10: { included: true, qty: '2', notes: '2 robe hooks' },
         11: { included: true, detail: 'Match faucet', notes: 'All accessories in aged brass to match' },
       },
       // ELECTRICAL FIXTURES
       10: {
-        0: { included: true, qty: '6', notes: '6 Greenwich sconces' },
+        0: { included: true, qty: '2', notes: '2 vanity sconces' },
         1: { included: true, notes: 'Overhead light fixture' },
-        2: { included: true, detail: 'Whisper-quiet humidity sensing', notes: '2 Panasonic WhisperGreen exhaust fans' },
+        2: { included: true, detail: 'With light', notes: 'Exhaust fan with light' },
         3: { included: true, detail: 'Hardwired', notes: 'Hardwired towel warmer' },
       },
       // FLOORING
       11: {
         0: { included: true, notes: 'Remove existing bathroom flooring' },
         1: { included: true, notes: 'Subfloor prep and repair as needed' },
-        2: { included: true, detail: 'Electric mat', notes: 'Electric heated floor system' },
         3: { included: true, detail: 'Porcelain tile', notes: 'Calacatta porcelain tile' },
-        4: { included: true, qty: '395', notes: '395 SF - includes bathroom floor area' },
+        4: { included: true, qty: '100', notes: '100 SF bathroom floor area' },
         5: { included: true, detail: 'Tile base', notes: 'Tile base throughout' },
         6: { included: true, detail: 'Marble saddle', notes: 'Marble saddle at doorway' },
       },
@@ -274,7 +282,7 @@ const WAVERLY_PRESET = {
       },
       // TRIM & FINISH
       13: {
-        0: { included: true, detail: 'New standard', notes: 'New bathroom door' },
+        0: { included: true, detail: 'New pocket', notes: 'New pocket door for bathroom' },
         1: { included: true, detail: 'Privacy lock', notes: 'Privacy lock hardware' },
         2: { included: true, detail: 'N/A (tile base)', notes: 'Tile base instead of wood baseboards' },
       },
