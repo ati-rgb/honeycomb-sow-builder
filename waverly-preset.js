@@ -21,7 +21,7 @@ const WAVERLY_PRESET = {
     sowStatus: 'APPROVED',
     sowRevisionNotes: 'Initial issue from budget and materials lists.',
   },
-  selectedModules: { kitchen: true, bathroom: true },
+  selectedModules: { kitchen: true, bathroom: true, paint: true },
   bathCount: 3,
   bathNames: {
     'bathroom-1': { name: 'Primary Bathroom', type: 'Master Bath' },
@@ -164,17 +164,26 @@ const WAVERLY_PRESET = {
     'bathroom-1': {
       // DEMOLITION
       0: {
-        0: { included: true, notes: 'Remove existing tub, shower, vanity, toilet' },
-        1: { included: true, notes: 'Remove all existing tile' },
-        3: { included: true, notes: 'Remove all existing fixtures' },
-        4: { included: true, notes: 'Protect adjacent areas' },
-        5: { included: true, notes: 'Debris removal, dumpster shared with project' },
+        0: { included: true, notes: 'Remove existing vanity and cabinetry' },
+        1: { included: true, notes: 'Remove existing toilet' },
+        2: { included: true, detail: 'Shower only', notes: 'Remove existing shower only' },
+        3: { included: true, detail: 'Alcove', notes: 'Remove existing alcove bathtub' },
+        4: { included: true, detail: 'Tile', notes: 'Remove existing tile flooring to subfloor' },
+        5: { included: true, detail: 'Full walls', notes: 'Remove existing wall tile (full walls)' },
+        6: { included: true, notes: 'Remove existing mirrors, accessories, and light fixtures' },
+        7: { included: true, detail: 'Standard', notes: 'Remove existing standard door' },
+        8: { included: true, notes: 'Complete debris removal and disposal from site' },
       },
       // FRAMING
       1: {
-        0: { included: true, notes: 'Frame new walk-in shower area' },
-        1: { included: true, notes: 'Frame for freestanding tub location' },
-        2: { included: true, notes: 'Blocking for grab bars and fixtures throughout' },
+        0: { included: true, notes: 'Frame shower enclosure per architectural plans' },
+        1: { included: true, detail: 'Drop-in deck', notes: 'Frame drop-in deck tub support per plans' },
+        2: { included: true, notes: 'Install blocking for grab bar locations' },
+        3: { included: true, notes: 'Install blocking for wall-mounted fixtures' },
+        4: { included: true, detail: 'Pocket door', notes: 'Frame pocket door opening per plans' },
+        5: { included: true, detail: 'Built-in floating', notes: 'Frame built-in floating shower bench per plans' },
+        6: { included: true, qty: '1', notes: 'Frame shower niche per plans' },
+        7: { included: true, notes: 'Complete wall modifications per architectural plans' },
       },
       // PLUMBING
       2: {
@@ -269,6 +278,7 @@ const WAVERLY_PRESET = {
       11: {
         0: { included: true, notes: 'Remove existing bathroom flooring' },
         1: { included: true, notes: 'Subfloor prep and repair as needed' },
+        2: { included: true, detail: 'Electric mat', notes: 'Electric mat heated floor system' },
         3: { included: true, detail: 'Porcelain tile', notes: 'Calacatta porcelain tile' },
         4: { included: true, qty: '100', notes: '100 SF bathroom floor area' },
         5: { included: true, detail: 'Tile base', notes: 'Tile base throughout' },
@@ -299,15 +309,21 @@ const WAVERLY_PRESET = {
     'bathroom-2': {
       // DEMOLITION
       0: {
-        0: { included: true, notes: 'Remove existing tub/shower, vanity, toilet' },
-        1: { included: true, notes: 'Remove existing tile' },
-        4: { included: true, notes: 'Protect adjacent areas' },
-        5: { included: true, notes: 'Debris removal, dumpster shared' },
+        0: { included: true, notes: 'Remove existing vanity and cabinetry' },
+        1: { included: true, notes: 'Remove existing toilet' },
+        2: { included: true, detail: 'Tub/shower combo', notes: 'Remove existing tub/shower combo' },
+        3: { included: true, detail: 'Alcove', notes: 'Remove existing alcove bathtub' },
+        4: { included: true, detail: 'Tile', notes: 'Remove existing tile flooring to subfloor' },
+        5: { included: true, detail: 'Shower area only', notes: 'Remove existing wall tile (shower area only)' },
+        6: { included: true, notes: 'Remove existing mirrors, accessories, and light fixtures' },
+        8: { included: true, notes: 'Complete debris removal and disposal from site' },
       },
       // FRAMING
       1: {
-        0: { included: true, notes: 'Minor framing adjustments' },
-        2: { included: true, notes: 'Backing for fixtures and tile' },
+        1: { included: true, detail: 'Drop-in deck', notes: 'Frame drop-in deck tub support per plans' },
+        2: { included: true, notes: 'Install blocking for grab bar locations' },
+        3: { included: true, detail: 'Wall-mount vanity', notes: 'Install blocking for wall-mount vanity' },
+        6: { included: true, qty: '1', notes: 'Frame 1 shower niche per plans' },
       },
       // PLUMBING
       2: {
@@ -368,8 +384,11 @@ const WAVERLY_PRESET = {
       // FLOORING
       11: {
         0: { included: true, notes: 'Remove existing flooring' },
-        3: { included: true, detail: 'Ceramic tile', notes: 'Zellige Ivory mosaic' },
-        4: { included: true, notes: 'Floor tile throughout bathroom' },
+        2: { included: true, detail: 'Electric mat', notes: 'Electric mat heated floor system' },
+        3: { included: true, detail: 'Ceramic tile', notes: 'Zellige Ivory mosaic ceramic tile' },
+        4: { included: true, qty: '20', notes: '20 SF' },
+        5: { included: true, detail: 'Tile base', qty: '14', notes: 'Tile base 14 LF' },
+        6: { included: true, detail: 'Marble saddle', notes: 'Marble saddle threshold' },
       },
       // PAINTING
       12: {
@@ -389,16 +408,22 @@ const WAVERLY_PRESET = {
     'bathroom-3': {
       // DEMOLITION
       0: {
-        0: { included: true, notes: 'Remove existing fixtures from powder room' },
-        1: { included: true, notes: 'Remove existing finishes' },
-        4: { included: true, notes: 'Wall opening for new exterior door' },
-        5: { included: true, notes: 'Debris removal' },
+        0: { included: true, notes: 'Remove existing vanity and cabinetry' },
+        1: { included: true, notes: 'Remove existing toilet' },
+        2: { included: true, detail: 'Shower only', notes: 'Remove existing shower only' },
+        4: { included: true, detail: 'Tile', notes: 'Remove existing tile flooring to subfloor' },
+        5: { included: true, detail: 'Shower area only', notes: 'Remove existing wall tile (shower area only)' },
+        6: { included: true, notes: 'Remove existing mirrors, accessories, and light fixtures' },
+        8: { included: true, notes: 'Complete debris removal and disposal from site' },
       },
       // FRAMING
       1: {
-        0: { included: true, notes: "Frame for new shower enclosure (3'8\" x 5'4\")" },
-        1: { included: true, notes: 'Frame new exterior door opening, install header' },
-        2: { included: true, notes: 'Backing for tile and fixtures' },
+        0: { included: true, notes: 'Frame shower enclosure per architectural plans' },
+        2: { included: true, notes: 'Install blocking for grab bar locations' },
+        3: { included: true, notes: 'Install blocking for wall-mounted fixtures' },
+        4: { included: true, detail: 'Standard', notes: 'Frame standard door opening per plans' },
+        5: { included: true, detail: 'Built-in floating', notes: 'Frame built-in floating shower bench per plans' },
+        6: { included: true, qty: '1', notes: 'Frame 1 shower niche per plans' },
       },
       // PLUMBING
       2: {
@@ -458,8 +483,11 @@ const WAVERLY_PRESET = {
       // FLOORING
       11: {
         0: { included: true, notes: 'Remove existing flooring' },
+        2: { included: true, detail: 'Electric mat', notes: 'Electric mat heated floor system' },
         3: { included: true, detail: 'Porcelain tile', notes: 'Autograph Espresso Brown' },
-        4: { included: true, notes: 'Floor tile throughout' },
+        4: { included: true, qty: '100', notes: '100 SF' },
+        5: { included: true, detail: 'Tile base', qty: '30', notes: 'Tile base 30 LF' },
+        6: { included: true, detail: 'Marble saddle', notes: 'Marble saddle threshold' },
       },
       // PAINTING
       12: {
@@ -469,13 +497,26 @@ const WAVERLY_PRESET = {
       },
       // TRIM & FINISH
       13: {
-        0: { included: true, detail: 'New standard', notes: 'New exterior door to pool/patio area' },
+        0: { included: true, detail: 'New standard', notes: 'New standard door' },
       },
       // FINAL
       14: {
         0: { included: true, notes: 'Final cleaning' },
         2: { included: true, notes: 'Punchlist items' },
         3: { included: true, notes: 'Final walkthrough' },
+      },
+    },
+
+    // ==================== INTERIOR PAINT ====================
+    'paint': {
+      0: {
+        0: { included: true, qty: '1200', notes: '1200 SF wall prep throughout (patch, sand, prime)' },
+        1: { included: true, notes: 'Paint all walls' },
+        2: { included: true, notes: 'Paint all ceilings' },
+        3: { included: true, notes: 'Paint all trim/baseboards/casing' },
+        4: { included: true, notes: 'Paint all interior doors' },
+        5: { included: true, detail: '3-4', notes: '3-4 colors' },
+        6: { included: true, notes: 'Touch-up and repair drywall before paint' },
       },
     },
   },
@@ -563,6 +604,7 @@ function loadWaverlyPreset() {
   // Select modules
   if (!selectedModules['kitchen']) toggleModule('kitchen');
   if (!selectedModules['bathroom']) toggleModule('bathroom');
+  if (!selectedModules['paint']) toggleModule('paint');
 
   // Set bathroom count
   const countEl = document.getElementById('count-bathroom');
